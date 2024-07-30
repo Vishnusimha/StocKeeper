@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "36366736695",
+    "firebase_url": "https://stockeeper-eacb1-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "stockeeper-eacb1",
+    "storage_bucket": "stockeeper-eacb1.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:36366736695:android:84c258cfd3661f70a00eb2",
+        "android_client_info": {
+          "package_name": "com.vishnu.stockeeper"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDd7GFYEq12iOl3nrhv_M0tNW6zn-IQ9yo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
