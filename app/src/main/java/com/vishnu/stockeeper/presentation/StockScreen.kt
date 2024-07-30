@@ -1,14 +1,15 @@
 package com.vishnu.stockeeper.presentation
 
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -42,13 +43,12 @@ fun StockScreen(
     navController: NavHostController
 ) {
     val isUserPresent by authViewModel.isUserPresent.collectAsState(false)
-
     val coroutineScope = rememberCoroutineScope()
     val items by stockViewModel.stockItems.collectAsState(emptyList())
     val isRefreshing by stockViewModel.isRefreshing.collectAsState(false)
     val context = LocalContext.current
 
-    LaunchedEffect(key1 = stockViewModel) {
+    LaunchedEffect(key1 = isUserPresent) {
         if (!isUserPresent) {
             navController.navigate(Screen.AuthScreen.route) {
                 popUpTo(Screen.AuthScreen.route) { inclusive = true }
@@ -64,63 +64,72 @@ fun StockScreen(
                     titleContentColor = MaterialTheme.colorScheme.primary,
                 ),
                 title = {
-                    Text("Stock")
+                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        Text("Stock")
+                    }
                 }
             )
         }
     ) { innerPadding ->
-        SwipeRefresh(state = SwipeRefreshState(isRefreshing = isRefreshing), onRefresh = {
-            coroutineScope.launch {
-                stockViewModel.refresh()
-            }
-        }) {
-            Surface(
-                modifier = Modifier
-                    .padding(innerPadding),
-                shadowElevation = 4.dp,
-                color = Color.White,
-            ) {
-                if (isRefreshing) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
+        Surface(
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxSize(),
+            shadowElevation = 4.dp,
+            color = Color.White,
+        ) {
+            SwipeRefresh(
+                state = SwipeRefreshState(isRefreshing = isRefreshing),
+                onRefresh = {
+                    coroutineScope.launch {
+                        stockViewModel.refresh()
                     }
-                } else {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                    ) {
-                        Button(onClick = {
-                            stockViewModel.addStockItem(
-                                StockDto(
-                                    name = "vishnu",
-                                    quantity = 1,
-                                    expirationDate = 1221,
-                                    purchaseDate = 1212,
-                                    updatedBy = "Simha"
-                                )
+                }
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Top
+                ) {
+                    Button(onClick = {
+                        stockViewModel.addStockItem(
+                            StockDto(
+                                name = "vishnu",
+                                quantity = 1,
+                                expirationDate = 1221,
+                                purchaseDate = 1212,
+                                updatedBy = "Simha"
                             )
-                        }) {
-                            Text(text = "Add Data")
-                        }
+                        )
+                    }) {
+                        Text(text = "Add Data")
+                    }
 
-                        LazyColumn {
-                            items(items) { item ->
-                                Text(text = " name = ${item.name}, quantity = ${item.quantity} , updatedBy = ${item.updatedBy}  expirationDate = ${item.expirationDate}")
-                            }
+                    LazyColumn(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxWidth()
+                    ) {
+                        items(items) { item ->
+                            Text(
+                                text = " name = ${item.name}, quantity = ${item.quantity} , updatedBy = ${item.updatedBy}  expirationDate = ${item.expirationDate}",
+                                modifier = Modifier.padding(vertical = 8.dp)
+                            )
                         }
+                    }
 
-                        Button(onClick = {
-                            authViewModel.signOut()
-                            navController.navigate(Screen.AuthScreen.route) {
-                                popUpTo(Screen.AuthScreen.route) { inclusive = true }
-                            }
-                        }) {
-                            Text(text = "Sign Out")
+                    Button(onClick = {
+                        authViewModel.signOut()
+                        navController.navigate(Screen.AuthScreen.route) {
+                            popUpTo(Screen.AuthScreen.route) { inclusive = true }
                         }
+                    }) {
+                        Text(text = "Sign Out")
                     }
                 }
             }
         }
     }
 }
-
