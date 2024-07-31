@@ -8,9 +8,12 @@ import com.google.firebase.database.ValueEventListener
 import com.vishnu.stockeeper.data.StockDto
 import kotlinx.coroutines.tasks.await
 
-class FirebaseStockRepository {
-    private val database: DatabaseReference =
-        FirebaseDatabase.getInstance().reference.child("stock_items")
+class FirebaseStockRepository(
+    userKey: String
+) {
+    private var database: DatabaseReference =
+        FirebaseDatabase.getInstance().reference.child("user_stocks").child(userKey)
+
 
     suspend fun getAllItemsFromFirebase(): List<StockDto> {
         return try {
@@ -29,7 +32,6 @@ class FirebaseStockRepository {
         }
     }
 
-
     fun addItem(stockDto: StockDto) {
         val key = database.push().key ?: return
         database.child(key).setValue(stockDto)
@@ -44,7 +46,6 @@ class FirebaseStockRepository {
     }
 
     fun deleteAllItems() {
-        // This will delete all children of the "stock_items" node
         database.removeValue()
     }
 
@@ -67,3 +68,4 @@ class FirebaseStockRepository {
         })
     }
 }
+

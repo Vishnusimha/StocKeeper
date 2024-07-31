@@ -1,6 +1,5 @@
 package com.vishnu.stockeeper.presentation
 
-
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -35,6 +34,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.vishnu.stockeeper.util.PreferenceHelper
 import com.vishnu.stockeeper.viewmodel.AuthViewModel
 import kotlinx.coroutines.launch
 
@@ -43,11 +43,10 @@ import kotlinx.coroutines.launch
 fun AuthScreen(authViewModel: AuthViewModel, navController: NavHostController) {
     val isUserPresent by authViewModel.isUserPresent.collectAsState(false)
     val authState by authViewModel.authState.collectAsState()
+    val context = LocalContext.current
 
     // Coroutine scope to handle side effects
     val coroutineScope = rememberCoroutineScope()
-    val isRefreshing = remember { mutableStateOf(false) }
-    val context = LocalContext.current
 
     // State to hold email and password input
     var email by remember { mutableStateOf("") }
@@ -175,7 +174,9 @@ fun AuthScreen(authViewModel: AuthViewModel, navController: NavHostController) {
                 Button(onClick = {
                     coroutineScope.launch {
                         if (email.isNotBlank() && password.isNotBlank()) {
-                            authViewModel.signup(email, password)
+                            authViewModel.signup(email, password) { uid ->
+                                uid?.let { PreferenceHelper.setMessage(context, "userUid", it) }
+                            }
                         }
                     }
                 }) {
@@ -187,7 +188,9 @@ fun AuthScreen(authViewModel: AuthViewModel, navController: NavHostController) {
                 Button(onClick = {
                     coroutineScope.launch {
                         if (email.isNotBlank() && password.isNotBlank()) {
-                            authViewModel.authenticate(email, password)
+                            authViewModel.authenticate(email, password) { uid ->
+                                uid?.let { PreferenceHelper.setMessage(context, "userUid", it) }
+                            }
                         }
                     }
                 }) {

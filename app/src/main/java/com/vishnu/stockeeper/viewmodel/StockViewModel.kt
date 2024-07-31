@@ -2,6 +2,8 @@ package com.vishnu.stockeeper.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.google.firebase.Firebase
+import com.google.firebase.auth.auth
 import com.vishnu.stockeeper.data.StockDto
 import com.vishnu.stockeeper.data.local.StockEntity
 import com.vishnu.stockeeper.data.toStockEntity
@@ -16,7 +18,9 @@ import javax.inject.Inject
 const val TAG = "StockViewModel"
 
 @HiltViewModel
-class StockViewModel @Inject constructor(private val stockManager: StockManager) : ViewModel() {
+class StockViewModel @Inject constructor(
+    private val stockManager: StockManager,
+) : ViewModel() {
 
     private val _stockItems = MutableStateFlow<List<StockEntity>>(emptyList())
     val stockItems: Flow<List<StockEntity>> get() = _stockItems.asStateFlow()
@@ -25,26 +29,40 @@ class StockViewModel @Inject constructor(private val stockManager: StockManager)
     val isRefreshing: Flow<Boolean> get() = _isRefreshing.asStateFlow()
 
     init {
-        // Observe changes in Firebase Realtime Database
+//        startStock()
         stockManager.observeStockItems { itemsFromFirebase ->
             viewModelScope.launch {
-                stockManager.deleteAllItemsFromLocal()
-                val itemsEntity = itemsFromFirebase.map { it.toStockEntity() }
-                stockManager.saveAllItemsIntoLocal(itemsEntity)
+                reLoadFromRemote(itemsFromFirebase)
             }
         }
+    }
 
-        refresh()
+    fun startStock() {
+        val userUid = Firebase.auth.currentUser?.uid
+        if (!userUid.isNullOrBlank()) {
+            stockManager.initFirebaseStockRepository(userUid)
+//            refresh()
+        } else {
+            _stockItems.value = emptyList()
+        }
+    }
+
+    private suspend fun reLoadFromRemote(itemsFromFirebase: List<StockDto>) {
+        viewModelScope.launch {
+            stockManager.deleteAllItemsFromLocal()
+            val itemsEntity = itemsFromFirebase.map { it.toStockEntity() }
+            stockManager.saveAllItemsIntoLocal(itemsEntity)
+            _stockItems.value = stockManager.getAllItemsFromLocal()  // Update the local state
+        }
     }
 
 
     fun refresh() {
-        _isRefreshing.value = true
         viewModelScope.launch {
-            val items = stockManager.getAllItemsFromLocal()
-            _stockItems.value = items
+            _isRefreshing.value = true
+            reLoadFromRemote(stockManager.getAllItemsFromRemote())
+            _isRefreshing.value = false
         }
-        _isRefreshing.value = false
     }
 
     // Add a new stock item
@@ -67,5 +85,4 @@ class StockViewModel @Inject constructor(private val stockManager: StockManager)
             stockManager.deleteItem(itemId)
         }
     }
-
 }

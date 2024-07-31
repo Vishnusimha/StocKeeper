@@ -48,6 +48,13 @@ fun StockScreen(
     val isRefreshing by stockViewModel.isRefreshing.collectAsState(false)
     val context = LocalContext.current
 
+    val needToInitiate = authViewModel.needToInitiate
+    if (needToInitiate) {
+        stockViewModel.startStock()
+        stockViewModel.refresh()
+        authViewModel.needToInitiate = false
+    }
+
     LaunchedEffect(key1 = isUserPresent) {
         if (!isUserPresent) {
             navController.navigate(Screen.AuthScreen.route) {
