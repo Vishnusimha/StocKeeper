@@ -24,7 +24,7 @@ class AuthViewModel @Inject constructor(private val stockManager: StockManager) 
 
     private val _authState = MutableStateFlow<AuthState>(AuthState.Idle)
     val authState: StateFlow<AuthState> get() = _authState.asStateFlow()
-    var needToInitiate = false
+    var needToInitiate = true
 
     init {
         checkCurrentUser()
@@ -59,6 +59,7 @@ class AuthViewModel @Inject constructor(private val stockManager: StockManager) 
                     Log.d(TAG, "createUserWithEmail:success")
                     currentUser = auth.currentUser
                     _isUserPresent.value = true
+                    needToInitiate = isUserPresent.value
 //                    initialiseFirebaseRepo(currentUser?.uid)
                     onResult(currentUser?.uid)
                 } else {
@@ -78,7 +79,7 @@ class AuthViewModel @Inject constructor(private val stockManager: StockManager) 
                     _isUserPresent.value = true
                     Log.d(TAG, "signInWithEmail:success - ${currentUser?.email}")
 //                    initialiseFirebaseRepo(currentUser?.uid)
-                    needToInitiate = true
+                    needToInitiate = isUserPresent.value
                     onResult(currentUser?.uid)
                 } else {
                     _isUserPresent.value = false
@@ -94,6 +95,7 @@ class AuthViewModel @Inject constructor(private val stockManager: StockManager) 
             auth.signOut()
             _isUserPresent.value = false
             currentUser = null
+            needToInitiate = isUserPresent.value
             stockManager.deleteAllItemsFromLocal()
         }
     }
