@@ -33,21 +33,20 @@ fun StockEntityCard(stockEntity: StockEntity) {
     ) {
         Column(
             modifier = Modifier
-                .padding(16.dp)
+                .padding(8.dp)
         ) {
             Text(
                 text = "${stockEntity.name} : ${stockEntity.quantity}",
-                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
+                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
             )
-
-            Spacer(modifier = Modifier.width(16.dp))
+            Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "Expiry Date: ${formatDate(stockEntity.expirationDate)}",
-                style = MaterialTheme.typography.labelSmall,
+                style = MaterialTheme.typography.bodySmall,
             )
             Text(
                 text = "Updated by: ${stockEntity.updatedBy}",
-                style = MaterialTheme.typography.labelSmall,
+                style = MaterialTheme.typography.labelMedium,
                 fontStyle = FontStyle.Italic,
                 textAlign = TextAlign.End,
                 modifier = Modifier.fillMaxWidth(),

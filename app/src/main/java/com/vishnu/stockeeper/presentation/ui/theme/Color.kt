@@ -1,4 +1,4 @@
-package com.vishnu.stockeeper.ui.theme
+package com.vishnu.stockeeper.presentation.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

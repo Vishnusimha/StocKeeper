@@ -1,9 +1,12 @@
 package com.vishnu.stockeeper.presentation
 
 
+import android.app.Activity
+import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -12,21 +15,17 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -37,7 +36,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -58,17 +56,20 @@ fun StockScreen(
     authViewModel: AuthViewModel,
     navController: NavHostController
 ) {
+    // Make searchQuery and searchIconClicked mutable
+    var searchQuery by remember { mutableStateOf("") }
+    var isSearchVisible by remember { mutableStateOf(false) }
+    var filterMenuExpanded by remember { mutableStateOf(false) }
+
     val isUserPresent by authViewModel.isUserPresent.collectAsState(false)
     val coroutineScope = rememberCoroutineScope()
     val items by stockViewModel.stockItems.collectAsState(emptyList())
     val isRefreshing by stockViewModel.isRefreshing.collectAsState(false)
     val context = LocalContext.current
-    // State to hold the search query
-    var searchQuery by remember { mutableStateOf("") }
-    // State to control the visibility of the search bar
-    var searchIconClicked by remember { mutableStateOf(false) }
-    // State to control the visibility of the filter menu
-    var filterMenuExpanded by remember { mutableStateOf(false) }
+    var isAllSelected by remember { mutableStateOf(false) }
+    var isQuantitySelected by remember { mutableStateOf(false) }
+    var isExpirySelected by remember { mutableStateOf(false) }
+    var isNameSelected by remember { mutableStateOf(false) }
 
     val needToInitiate = authViewModel.needToInitiate
     if (needToInitiate) {
@@ -77,106 +78,71 @@ fun StockScreen(
         authViewModel.needToInitiate = false
     }
 
-    LaunchedEffect(key1 = isUserPresent) {
+    LaunchedEffect(isUserPresent) {
         if (!isUserPresent) {
-            navController.navigate(Screen.AuthScreen.route) {
-                popUpTo(Screen.AuthScreen.route) { inclusive = true }
-            }
+            val intent = Intent(context, LoginActivity::class.java)
+            context.startActivity(intent)
+            (context as? Activity)?.finish()
         }
     }
 
-
-
     Scaffold(
-        topBar = {
-            TopAppBar(
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.primary,
-                ),
-                title = {
-                    Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        Text("Stock")
-                    }
-                },
-                actions = {
-                    IconButton(onClick = { searchIconClicked = !searchIconClicked }) {
-                        Icon(Icons.Default.Search, contentDescription = "Search")
-                    }
-
-                    IconButton(onClick = { filterMenuExpanded = !filterMenuExpanded }) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "Filter")
-                    }
-                    // Dropdown menu for filter options
-                    DropdownMenu(
-                        expanded = filterMenuExpanded,
-                        onDismissRequest = { filterMenuExpanded = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text("Sort by Name") },
-                            onClick = { stockViewModel.loadItemsSortedByName() }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Sort by Expiry") },
-                            onClick = { stockViewModel.loadItemsSortedByExpirationDate() }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Sort by Quantity") },
-                            onClick = { stockViewModel.loadItemsSortedByQuantity() }
-                        )
-                    }
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { isSearchVisible = !isSearchVisible }, content = {
+                    Icon(Icons.Default.Search, contentDescription = "Filter")
                 }
             )
         }
     ) { innerPadding ->
-        Surface(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize(),
-            shadowElevation = 4.dp,
-            color = Color.White,
-        ) {
-            SwipeRefresh(
-                state = SwipeRefreshState(isRefreshing = isRefreshing),
-                onRefresh = {
-                    coroutineScope.launch {
-                        stockViewModel.refresh()
-                    }
+        SwipeRefresh(
+            state = SwipeRefreshState(isRefreshing = isRefreshing),
+            onRefresh = {
+                coroutineScope.launch {
+                    stockViewModel.refresh()
                 }
+            }
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(
+                        bottom = 0.dp, top = if (innerPadding.calculateTopPadding() < 16.dp) {
+                            16.dp
+                        } else {
+                            innerPadding.calculateTopPadding()
+                        }
+                    )
             ) {
-                Box(
+                Column(
                     modifier = Modifier
                         .fillMaxSize()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.Top
                 ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Top
-                    ) {
+                    if (isSearchVisible) {
+                        TextField(
+                            singleLine = true,
+                            value = searchQuery,
+                            onValueChange = { newQuery ->
+                                searchQuery = newQuery
+                                stockViewModel.searchItems(newQuery) // Trigger search
+                            },
+                            keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
+                            keyboardActions = KeyboardActions(onSearch = {
+                                stockViewModel.searchItems(searchQuery) // Trigger search on Enter key press
+                            }),
+                            label = { Text("Search") },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 16.dp)
+                        )
+                    } else {
+                        searchQuery = ""
+                    }
 
-                        // Search Bar
-                        if (searchIconClicked) {
-                            TextField(
-                                singleLine = true,
-                                value = searchQuery,
-                                onValueChange = {
-                                    searchQuery = it
-                                    stockViewModel.searchItems(searchQuery) // Trigger search
-                                },
-                                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
-                                keyboardActions = KeyboardActions(onSearch = {
-                                    stockViewModel.searchItems(searchQuery) // Trigger search on Enter key press
-                                }),
-                                label = { Text("Search") },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(bottom = 16.dp)
-                            )
-                        }
-
-                        Button(onClick = {
+                    OutlinedButton(
+                        onClick = {
                             stockViewModel.addStockItem(
                                 StockDto(
                                     id = 1,
@@ -187,60 +153,132 @@ fun StockScreen(
                                     updatedBy = "user123"
                                 )
                             )
-                        }) {
-                            Text(text = "Add Data")
-                        }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                    ) {
+                        Text(text = "Add Data")
+                    }
 
-
-
-                        if (items.isEmpty()) {
-                            Text(text = "No items available")
-                        } else {
-                            LazyColumn(
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .fillMaxWidth()
-//                                        .padding(6.dp)
-                            ) {
-                                items(items) { item ->
-                                    StockEntityCard(item)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        FilterChip(
+                            selected = isAllSelected,
+                            onClick = {
+                                isAllSelected = !isAllSelected
+                                isQuantitySelected = false
+                                isExpirySelected = false
+                                isNameSelected = false
+                                stockViewModel.refresh()
+                            },
+                            label = { Text("All") },
+                            leadingIcon = {
+                                if (isAllSelected) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Check,
+                                        contentDescription = "Selected"
+                                    )
                                 }
                             }
-                        }
-                        Button(onClick = {
-                            authViewModel.signOut()
-                            navController.navigate(Screen.AuthScreen.route) {
-                                popUpTo(Screen.AuthScreen.route) { inclusive = true }
-                            }
-                        }) {
-                            Text(text = "Sign Out")
-                        }
+                        )
 
-//                        Row(
-//                            modifier = Modifier
-//                                .fillMaxWidth(),
-//                            horizontalArrangement = Arrangement.SpaceBetween
-//                        ) {
-//                            Button(onClick = {
-//                                stockViewModel.loadItemsSortedByQuantity()
-//                            }) {
-//                                Text(text = "Quantity")
-//                            }
-//                            Button(onClick = {
-//                                stockViewModel.loadItemsSortedByExpirationDate()
-//                            }) {
-//                                Text(text = "Expiration")
-//                            }
-//                            Button(onClick = {
-//                                stockViewModel.loadItemsSortedByName()
-//                            }) {
-//                                Text(text = "Name")
-//                            }
-//                        }
+                        FilterChip(
+                            selected = isQuantitySelected,
+                            onClick = {
+                                isQuantitySelected = !isQuantitySelected
+                                isAllSelected = false
+                                isExpirySelected = false
+                                isNameSelected = false
+                                stockViewModel.loadItemsSortedByQuantity()
+                            },
+                            label = { Text("Quantity") },
+                            leadingIcon = {
+                                if (isQuantitySelected) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Check,
+                                        contentDescription = "Selected"
+                                    )
+                                }
+                            }
+                        )
+
+                        FilterChip(
+                            selected = isExpirySelected,
+                            onClick = {
+                                isExpirySelected = !isExpirySelected
+                                isAllSelected = false
+                                isQuantitySelected = false
+                                isNameSelected = false
+                                stockViewModel.loadItemsSortedByExpirationDate()
+                            },
+                            label = { Text("Expiry") },
+                            leadingIcon = {
+                                if (isExpirySelected) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Check,
+                                        contentDescription = "Selected"
+                                    )
+                                }
+                            }
+                        )
+
+                        FilterChip(
+                            selected = isNameSelected,
+                            onClick = {
+                                isNameSelected = !isNameSelected
+                                isAllSelected = false
+                                isQuantitySelected = false
+                                isExpirySelected = false
+                                stockViewModel.loadItemsSortedByName()
+                            },
+                            label = { Text("Name") },
+                            leadingIcon = {
+                                if (isNameSelected) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Check,
+                                        contentDescription = "Selected"
+                                    )
+                                }
+                            }
+                        )
                     }
+
+                    if (items.isEmpty()) {
+                        Text(text = "No items available")
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxWidth()
+                                .padding(8.dp)
+                                .padding(bottom = 16.dp)
+                        ) {
+                            items(items) { item ->
+                                StockEntityCard(item)
+                            }
+                        }
+                    }
+                }
+
+                // Sign Out Button at the bottom center
+                Button(
+                    onClick = {
+                        authViewModel.signOut()
+                        val intent = Intent(context, LoginActivity::class.java)
+                        context.startActivity(intent)
+                        (context as? Activity)?.finish()
+                    },
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .padding(8.dp)
+                ) {
+                    Text(text = "Sign Out")
                 }
             }
         }
     }
 }
-
