@@ -38,7 +38,6 @@ class AuthViewModel @Inject constructor(private val stockManager: StockManager) 
     fun authenticate(email: String, password: String, onResult: (String?) -> Unit) {
         if (currentUser != null) {
             _isUserPresent.value = true
-//            userData()
             Log.d(TAG, "authenticate: currently User is available")
             onResult(currentUser?.uid)
         } else {
@@ -60,7 +59,6 @@ class AuthViewModel @Inject constructor(private val stockManager: StockManager) 
                     currentUser = auth.currentUser
                     _isUserPresent.value = true
                     needToInitiate = isUserPresent.value
-//                    initialiseFirebaseRepo(currentUser?.uid)
                     onResult(currentUser?.uid)
                 } else {
                     Log.w(TAG, "createUserWithEmail:failure", task.exception)
@@ -78,7 +76,6 @@ class AuthViewModel @Inject constructor(private val stockManager: StockManager) 
                     currentUser = auth.currentUser
                     _isUserPresent.value = true
                     Log.d(TAG, "signInWithEmail:success - ${currentUser?.email}")
-//                    initialiseFirebaseRepo(currentUser?.uid)
                     needToInitiate = isUserPresent.value
                     onResult(currentUser?.uid)
                 } else {
@@ -92,11 +89,11 @@ class AuthViewModel @Inject constructor(private val stockManager: StockManager) 
 
     fun signOut() {
         viewModelScope.launch {
-            auth.signOut()
+            stockManager.deleteAllItemsFromLocal()
             _isUserPresent.value = false
             currentUser = null
             needToInitiate = isUserPresent.value
-            stockManager.deleteAllItemsFromLocal()
+            auth.signOut()
         }
     }
 
@@ -104,5 +101,4 @@ class AuthViewModel @Inject constructor(private val stockManager: StockManager) 
         object Idle : AuthState()
         data class Error(val message: String?) : AuthState()
     }
-
 }

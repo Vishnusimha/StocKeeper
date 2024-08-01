@@ -31,7 +31,6 @@ class StockViewModel @Inject constructor(
     private val _filteredItems = MutableStateFlow<List<StockEntity>>(emptyList())
     val filteredItems: Flow<List<StockEntity>> = _filteredItems
 
-
     init {
         stockManager.observeStockItems { itemsFromFirebase ->
             viewModelScope.launch {
@@ -50,14 +49,11 @@ class StockViewModel @Inject constructor(
     }
 
     private suspend fun reLoadFromRemote(itemsFromFirebase: List<StockDto>) {
-        viewModelScope.launch {
-            stockManager.deleteAllItemsFromLocal()
-            val itemsEntity = itemsFromFirebase.map { it.toStockEntity() }
-            stockManager.saveAllItemsIntoLocal(itemsEntity)
-            _stockItems.value = stockManager.getAllItemsFromLocal()  // Update the local state
-        }
+        stockManager.deleteAllItemsFromLocal()
+        val itemsEntity = itemsFromFirebase.map { it.toStockEntity() }
+        stockManager.saveAllItemsIntoLocal(itemsEntity)
+        _stockItems.value = stockManager.getAllItemsFromLocal()  // Update the local state
     }
-
 
     fun refresh() {
         viewModelScope.launch {
@@ -67,21 +63,18 @@ class StockViewModel @Inject constructor(
         }
     }
 
-    // Add a new stock item
     fun addStockItem(stockDto: StockDto) {
         viewModelScope.launch {
             stockManager.addItem(stockDto)
         }
     }
 
-    // Update an existing stock item
     fun updateStockItem(stockDto: StockDto) {
         viewModelScope.launch {
             stockManager.updateItem(stockDto)
         }
     }
 
-    // Delete a stock item by ID
     fun deleteStockItem(itemId: Int) {
         viewModelScope.launch {
             stockManager.deleteItem(itemId)
@@ -94,14 +87,12 @@ class StockViewModel @Inject constructor(
         }
     }
 
-    // Load all items sorted by expiration date
     fun loadItemsSortedByExpirationDate() {
         viewModelScope.launch {
             _stockItems.value = stockManager.getAllItemsSortedByExpirationDate()
         }
     }
 
-    // Load all items sorted by quantity
     fun loadItemsSortedByQuantity() {
         viewModelScope.launch {
             _stockItems.value = stockManager.getAllItemsSortedByQuantity()

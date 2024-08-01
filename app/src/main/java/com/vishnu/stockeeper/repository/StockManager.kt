@@ -1,5 +1,6 @@
 package com.vishnu.stockeeper.repository
 
+import android.util.Log
 import com.vishnu.stockeeper.data.StockDto
 import com.vishnu.stockeeper.data.local.StockEntity
 import com.vishnu.stockeeper.data.toStockEntity
@@ -11,6 +12,7 @@ class StockManager @Inject constructor(
     private var firebaseRepo: FirebaseStockRepository? = null
 
     fun initFirebaseStockRepository(userUid: String) {
+        Log.d("StockManager", "initFirebaseStockRepository")
         firebaseRepo = FirebaseStockRepository(userUid)
     }
 

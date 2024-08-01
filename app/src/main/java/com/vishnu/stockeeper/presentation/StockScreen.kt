@@ -1,8 +1,6 @@
 package com.vishnu.stockeeper.presentation
 
 
-import android.app.Activity
-import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,7 +16,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -27,7 +24,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -49,7 +45,6 @@ import com.vishnu.stockeeper.viewmodel.StockViewModel
 import kotlinx.coroutines.launch
 import java.util.Date
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StockScreen(
     stockViewModel: StockViewModel,
@@ -59,9 +54,7 @@ fun StockScreen(
     // Make searchQuery and searchIconClicked mutable
     var searchQuery by remember { mutableStateOf("") }
     var isSearchVisible by remember { mutableStateOf(false) }
-    var filterMenuExpanded by remember { mutableStateOf(false) }
 
-    val isUserPresent by authViewModel.isUserPresent.collectAsState(false)
     val coroutineScope = rememberCoroutineScope()
     val items by stockViewModel.stockItems.collectAsState(emptyList())
     val isRefreshing by stockViewModel.isRefreshing.collectAsState(false)
@@ -76,14 +69,6 @@ fun StockScreen(
         stockViewModel.startStock()
         stockViewModel.refresh()
         authViewModel.needToInitiate = false
-    }
-
-    LaunchedEffect(isUserPresent) {
-        if (!isUserPresent) {
-            val intent = Intent(context, LoginActivity::class.java)
-            context.startActivity(intent)
-            (context as? Activity)?.finish()
-        }
     }
 
     Scaffold(
@@ -267,9 +252,7 @@ fun StockScreen(
                 Button(
                     onClick = {
                         authViewModel.signOut()
-                        val intent = Intent(context, LoginActivity::class.java)
-                        context.startActivity(intent)
-                        (context as? Activity)?.finish()
+                        navController.navigate(Screen.AuthScreen.route)
                     },
                     modifier = Modifier
                         .align(Alignment.BottomCenter)

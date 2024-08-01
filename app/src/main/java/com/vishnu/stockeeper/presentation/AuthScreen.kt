@@ -24,15 +24,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import com.vishnu.stockeeper.util.PreferenceHelper
 import com.vishnu.stockeeper.viewmodel.AuthViewModel
 import kotlinx.coroutines.launch
 
 @Composable
 fun AuthScreen(
     authViewModel: AuthViewModel,
-    onLoginSuccess: () -> Unit
 ) {
     val authState by authViewModel.authState.collectAsState()
     val coroutineScope = rememberCoroutineScope()
@@ -44,6 +45,7 @@ fun AuthScreen(
     // State to manage errors
     var emailError by remember { mutableStateOf<String?>(null) }
     var passwordError by remember { mutableStateOf<String?>(null) }
+    val context = LocalContext.current
 
     // Update error states based on auth state
     LaunchedEffect(key1 = authState) {
@@ -125,11 +127,12 @@ fun AuthScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(onClick = {
+            PreferenceHelper.setBoolean(context, "login", true)
             coroutineScope.launch {
                 if (email.isNotBlank() && password.isNotBlank()) {
                     authViewModel.signup(email, password) { uid ->
                         if (uid != null) {
-                            onLoginSuccess()
+//                           TODO
                         }
                     }
                 }
@@ -141,11 +144,12 @@ fun AuthScreen(
         Spacer(modifier = Modifier.height(16.dp))
 
         Button(onClick = {
+            PreferenceHelper.setBoolean(context, "login", true)
             coroutineScope.launch {
                 if (email.isNotBlank() && password.isNotBlank()) {
                     authViewModel.authenticate(email, password) { uid ->
                         if (uid != null) {
-                            onLoginSuccess()
+//                        TODO
                         }
                     }
                 }
