@@ -28,4 +28,17 @@ interface StockItemDao {
 
     @Query("DELETE FROM stock_items")
     suspend fun deleteAll()
+
+    //Sorting
+    // Get all items sorted by name
+    @Query("SELECT * FROM stock_items ORDER BY name DESC")
+    suspend fun getAllItemsSortedByName(): List<StockEntity>
+
+    // Get all items sorted by expiration date
+    @Query("SELECT * FROM stock_items ORDER BY expirationDate DESC")
+    suspend fun getAllItemsSortedByExpirationDate(): List<StockEntity>
+
+    // Get all items sorted by quantity
+    @Query("SELECT * FROM stock_items ORDER BY quantity DESC")
+    suspend fun getAllItemsSortedByQuantity(): List<StockEntity>
 }

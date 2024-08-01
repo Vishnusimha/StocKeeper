@@ -28,8 +28,11 @@ class StockViewModel @Inject constructor(
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: Flow<Boolean> get() = _isRefreshing.asStateFlow()
 
+    private val _filteredItems = MutableStateFlow<List<StockEntity>>(emptyList())
+    val filteredItems: Flow<List<StockEntity>> = _filteredItems
+
+
     init {
-//        startStock()
         stockManager.observeStockItems { itemsFromFirebase ->
             viewModelScope.launch {
                 reLoadFromRemote(itemsFromFirebase)
@@ -41,7 +44,6 @@ class StockViewModel @Inject constructor(
         val userUid = Firebase.auth.currentUser?.uid
         if (!userUid.isNullOrBlank()) {
             stockManager.initFirebaseStockRepository(userUid)
-//            refresh()
         } else {
             _stockItems.value = emptyList()
         }
@@ -83,6 +85,35 @@ class StockViewModel @Inject constructor(
     fun deleteStockItem(itemId: Int) {
         viewModelScope.launch {
             stockManager.deleteItem(itemId)
+        }
+    }
+
+    fun loadItemsSortedByName() {
+        viewModelScope.launch {
+            _stockItems.value = stockManager.getAllItemsSortedByName()
+        }
+    }
+
+    // Load all items sorted by expiration date
+    fun loadItemsSortedByExpirationDate() {
+        viewModelScope.launch {
+            _stockItems.value = stockManager.getAllItemsSortedByExpirationDate()
+        }
+    }
+
+    // Load all items sorted by quantity
+    fun loadItemsSortedByQuantity() {
+        viewModelScope.launch {
+            _stockItems.value = stockManager.getAllItemsSortedByQuantity()
+        }
+    }
+
+    fun searchItems(query: String) {
+        viewModelScope.launch {
+            _filteredItems.value =
+                stockManager.getAllItemsFromLocal()
+                    .filter { it.name.contains(query, ignoreCase = true) }
+            _stockItems.value = _filteredItems.value
         }
     }
 }

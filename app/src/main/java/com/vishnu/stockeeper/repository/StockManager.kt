@@ -56,4 +56,16 @@ class StockManager @Inject constructor(
     fun observeStockItems(onDataChange: (List<StockDto>) -> Unit) {
         firebaseRepo?.observeStockItems(onDataChange)
     }
+
+    suspend fun getAllItemsSortedByName(): List<StockEntity> {
+        return localRepo.getAllItemsSortedByName()
+    }
+
+    suspend fun getAllItemsSortedByExpirationDate(): List<StockEntity> {
+        return localRepo.getAllItemsSortedByExpirationDate()
+    }
+
+    suspend fun getAllItemsSortedByQuantity(): List<StockEntity> {
+        return localRepo.getAllItemsSortedByQuantity()
+    }
 }
