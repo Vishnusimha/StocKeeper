@@ -41,4 +41,7 @@ interface StockItemDao {
     // Get all items sorted by quantity
     @Query("SELECT * FROM stock_items ORDER BY quantity DESC")
     suspend fun getAllItemsSortedByQuantity(): List<StockEntity>
+
+    @Query("SELECT name FROM stock_items")
+    suspend fun getAllItemNames(): List<String>
 }

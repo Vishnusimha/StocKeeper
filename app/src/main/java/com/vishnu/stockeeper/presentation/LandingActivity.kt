@@ -10,7 +10,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -105,7 +105,7 @@ class LandingActivity : ComponentActivity() {
                 )
             }
             composable(Screen.ProfileScreen.route) {
-                ProfileScreen()
+                ProfileScreen(authViewModel, navController)
             }
             composable(Screen.NotificationScreen.route) {
                 NotificationScreen()
@@ -113,15 +113,19 @@ class LandingActivity : ComponentActivity() {
             composable(Screen.AuthScreen.route) {
                 AuthScreen(authViewModel)
             }
+            composable(Screen.PlanScreen.route) {
+                PlanScreen(stockViewModel)
+            }
         }
     }
 
     @Composable
     fun BottomNavigationBar(navController: NavHostController) {
         val items = listOf(
+            Screen.NotificationScreen,
             Screen.StockScreen,
-            Screen.ProfileScreen,
-            Screen.NotificationScreen
+            Screen.PlanScreen,
+            Screen.ProfileScreen
         )
 
         NavigationBar {
@@ -129,7 +133,7 @@ class LandingActivity : ComponentActivity() {
                 NavigationBarItem(
                     icon = {
                         Icon(
-                            imageVector = Icons.Default.LocationOn,
+                            imageVector = screenIcons[screen.route] ?: Icons.Default.Edit,
                             contentDescription = screen.route
                         )
                     },

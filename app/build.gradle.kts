@@ -60,7 +60,7 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.database)
     implementation(libs.firebase.auth.ktx)
-    implementation (libs.androidx.work.runtime)
+    implementation(libs.androidx.work.runtime)
 
 //    Room
     ksp(libs.androidx.room.compiler)
@@ -76,6 +76,8 @@ dependencies {
     implementation(libs.androidx.hilt.navigation.compose)
 //Swipe to Refresh
     implementation(libs.accompanist.swiperefresh)
+//Gson
+    implementation(libs.converter.gson)
     //For testing
     testImplementation(libs.junit)
     testImplementation(libs.mockk)

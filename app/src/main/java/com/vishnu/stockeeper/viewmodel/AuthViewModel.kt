@@ -35,6 +35,10 @@ class AuthViewModel @Inject constructor(private val stockManager: StockManager) 
         _isUserPresent.value = currentUser != null
     }
 
+    fun getUserDetails(): String? {
+        return currentUser?.email
+    }
+
     fun authenticate(email: String, password: String, onResult: (String?) -> Unit) {
         if (currentUser != null) {
             _isUserPresent.value = true

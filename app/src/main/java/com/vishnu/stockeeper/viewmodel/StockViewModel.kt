@@ -4,7 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
+import com.google.gson.Gson
 import com.vishnu.stockeeper.data.StockDto
+import com.vishnu.stockeeper.data.StockItemSelection
 import com.vishnu.stockeeper.data.local.StockEntity
 import com.vishnu.stockeeper.data.toStockEntity
 import com.vishnu.stockeeper.repository.StockManager
@@ -25,11 +27,19 @@ class StockViewModel @Inject constructor(
     private val _stockItems = MutableStateFlow<List<StockEntity>>(emptyList())
     val stockItems: Flow<List<StockEntity>> get() = _stockItems.asStateFlow()
 
+    //    private val _stockItemsNames = MutableStateFlow<List<String>>(emptyList())
+//    val stockItemsNames: Flow<List<String>> get() = _stockItemsNames.asStateFlow()
+    private val _stockItemsNames = MutableStateFlow<List<StockItemSelection>>(emptyList())
+    val stockItemsNames: Flow<List<StockItemSelection>> get() = _stockItemsNames.asStateFlow()
+
+
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: Flow<Boolean> get() = _isRefreshing.asStateFlow()
 
     private val _filteredItems = MutableStateFlow<List<StockEntity>>(emptyList())
     val filteredItems: Flow<List<StockEntity>> = _filteredItems
+
+    private lateinit var itemNames: List<StockItemSelection>
 
     init {
         stockManager.observeStockItems { itemsFromFirebase ->
@@ -106,5 +116,29 @@ class StockViewModel @Inject constructor(
                     .filter { it.name.contains(query, ignoreCase = true) }
             _stockItems.value = _filteredItems.value
         }
+    }
+
+    fun fetchItemNames() {
+        viewModelScope.launch {
+            val itemNames = stockManager.getAllItemNames()
+            _stockItemsNames.value = itemNames.map { StockItemSelection(id = it, name = it) }
+        }
+    }
+
+    fun updateSelection(id: String, isSelected: Boolean) {
+        _stockItemsNames.value = _stockItemsNames.value.map { item ->
+            if (item.id == id) item.copy(isSelected = isSelected) else item
+        }
+    }
+
+    fun updateQuantity(id: String, quantity: Int) {
+        _stockItemsNames.value = _stockItemsNames.value.map { item ->
+            if (item.id == id) item.copy(quantity = quantity) else item
+        }
+    }
+
+    fun getSelectedItemsAsJson(): String {
+        val selectedItems = _stockItemsNames.value.filter { it.isSelected }
+        return Gson().toJson(selectedItems)
     }
 }

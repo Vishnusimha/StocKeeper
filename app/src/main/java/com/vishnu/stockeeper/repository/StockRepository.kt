@@ -62,4 +62,8 @@ class StockRepository @Inject constructor(private val stockItemDao: StockItemDao
     suspend fun getAllItemsSortedByQuantity(): List<StockEntity> {
         return stockItemDao.getAllItemsSortedByQuantity()
     }
+
+    suspend fun getAllItemNames(): List<String> {
+        return stockItemDao.getAllItemNames()
+    }
 }

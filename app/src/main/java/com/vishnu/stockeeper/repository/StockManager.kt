@@ -70,4 +70,8 @@ class StockManager @Inject constructor(
     suspend fun getAllItemsSortedByQuantity(): List<StockEntity> {
         return localRepo.getAllItemsSortedByQuantity()
     }
+
+    suspend fun getAllItemNames(): List<String> {
+        return localRepo.getAllItemNames()
+    }
 }
