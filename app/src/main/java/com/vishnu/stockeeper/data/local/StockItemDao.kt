@@ -44,4 +44,13 @@ interface StockItemDao {
 
     @Query("SELECT name FROM stock_items")
     suspend fun getAllItemNames(): List<String>
+
+    // Filtering item names by category
+    @Query("SELECT name FROM stock_items WHERE category = :categoryName ORDER BY name DESC")
+    suspend fun getItemNamesByCategory(categoryName: String): List<String>
+
+    // Filtering item names by shop
+    @Query("SELECT name FROM stock_items WHERE shop = :shopName ORDER BY name DESC")
+    suspend fun getItemNamesByShop(shopName: String): List<String>
+
 }

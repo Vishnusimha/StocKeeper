@@ -133,7 +133,9 @@ fun StockScreen(
                                     quantity = 10,
                                     expirationDate = dateToLong(Date()), // Convert Date to Long
                                     purchaseDate = dateToLong(Date()),
-                                    updatedBy = "user123"
+                                    updatedBy = "user123",
+                                    category = "Food",
+                                    shop = "More"
                                 )
                             )
                         },
@@ -177,7 +179,7 @@ fun StockScreen(
                                 isNameSelected = false
                                 stockViewModel.loadItemsSortedByQuantity()
                             },
-                            label = { Text("Quantity") },
+                            label = { Text("Shop") },
                             leadingIcon = {
                                 if (isQuantitySelected) {
                                     Icon(
@@ -197,7 +199,7 @@ fun StockScreen(
                                 isNameSelected = false
                                 stockViewModel.loadItemsSortedByExpirationDate()
                             },
-                            label = { Text("Expiry") },
+                            label = { Text("Category") },
                             leadingIcon = {
                                 if (isExpirySelected) {
                                     Icon(

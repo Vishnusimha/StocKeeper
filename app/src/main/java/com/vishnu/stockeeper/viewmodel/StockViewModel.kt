@@ -7,6 +7,9 @@ import com.google.firebase.auth.auth
 import com.google.gson.Gson
 import com.vishnu.stockeeper.data.StockDto
 import com.vishnu.stockeeper.data.StockItemSelection
+import com.vishnu.stockeeper.data.local.CategoryEntity
+import com.vishnu.stockeeper.data.local.SelectedStockItemList
+import com.vishnu.stockeeper.data.local.ShopEntity
 import com.vishnu.stockeeper.data.local.StockEntity
 import com.vishnu.stockeeper.data.toStockEntity
 import com.vishnu.stockeeper.repository.StockManager
@@ -14,6 +17,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -27,17 +31,27 @@ class StockViewModel @Inject constructor(
     private val _stockItems = MutableStateFlow<List<StockEntity>>(emptyList())
     val stockItems: Flow<List<StockEntity>> get() = _stockItems.asStateFlow()
 
-    //    private val _stockItemsNames = MutableStateFlow<List<String>>(emptyList())
-//    val stockItemsNames: Flow<List<String>> get() = _stockItemsNames.asStateFlow()
-    private val _stockItemsNames = MutableStateFlow<List<StockItemSelection>>(emptyList())
-    val stockItemsNames: Flow<List<StockItemSelection>> get() = _stockItemsNames.asStateFlow()
-
-
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: Flow<Boolean> get() = _isRefreshing.asStateFlow()
 
     private val _filteredItems = MutableStateFlow<List<StockEntity>>(emptyList())
     val filteredItems: Flow<List<StockEntity>> = _filteredItems
+
+    private val _stockItemsNames = MutableStateFlow<List<StockItemSelection>>(emptyList())
+    val stockItemsNames: Flow<List<StockItemSelection>> get() = _stockItemsNames.asStateFlow()
+
+    private val _stockCategories = MutableStateFlow<List<CategoryEntity>>(emptyList())
+    val stockCategories: Flow<List<CategoryEntity>> get() = _stockCategories.asStateFlow()
+
+    private val _stockShops = MutableStateFlow<List<ShopEntity>>(emptyList())
+    val stockShops: Flow<List<ShopEntity>> get() = _stockShops.asStateFlow()
+
+    private val _selectedItems = MutableStateFlow<Map<String, StockItemSelection>>(emptyMap())
+    val selectedItems: Flow<Map<String, StockItemSelection>> = _selectedItems.asStateFlow()
+
+    private val _selectedItemLists = MutableStateFlow<List<SelectedStockItemList>>(emptyList())
+    val selectedItemLists: Flow<List<SelectedStockItemList>> get() = _selectedItemLists.asStateFlow()
+
 
     private lateinit var itemNames: List<StockItemSelection>
 
@@ -109,6 +123,18 @@ class StockViewModel @Inject constructor(
         }
     }
 
+    fun getAllCategories() {
+        viewModelScope.launch {
+            _stockCategories.value = stockManager.getAllCategories()
+        }
+    }
+
+    fun getAllShops() {
+        viewModelScope.launch {
+            _stockShops.value = stockManager.getAllShops()
+        }
+    }
+
     fun searchItems(query: String) {
         viewModelScope.launch {
             _filteredItems.value =
@@ -121,24 +147,92 @@ class StockViewModel @Inject constructor(
     fun fetchItemNames() {
         viewModelScope.launch {
             val itemNames = stockManager.getAllItemNames()
-            _stockItemsNames.value = itemNames.map { StockItemSelection(id = it, name = it) }
+            val selectedItemIds = _selectedItems.value.keys
+            _stockItemsNames.value = itemNames.map {
+                StockItemSelection(id = it, name = it, isSelected = selectedItemIds.contains(it))
+            }
         }
     }
 
     fun updateSelection(id: String, isSelected: Boolean) {
-        _stockItemsNames.value = _stockItemsNames.value.map { item ->
-            if (item.id == id) item.copy(isSelected = isSelected) else item
+        _selectedItems.update { currentItems ->
+            if (isSelected) {
+                currentItems + (id to (currentItems[id]?.copy(isSelected = true)
+                    ?: StockItemSelection(id, "", isSelected = true)))
+            } else {
+                currentItems - id
+            }
         }
     }
 
     fun updateQuantity(id: String, quantity: Int) {
-        _stockItemsNames.value = _stockItemsNames.value.map { item ->
-            if (item.id == id) item.copy(quantity = quantity) else item
+        _selectedItems.update { currentItems ->
+            currentItems[id]?.let { currentItem ->
+                currentItems + (id to currentItem.copy(quantity = quantity))
+            } ?: currentItems
         }
     }
 
     fun getSelectedItemsAsJson(): String {
-        val selectedItems = _stockItemsNames.value.filter { it.isSelected }
-        return Gson().toJson(selectedItems)
+        val selectedItemsList = _selectedItems.value.values.toList()
+        return Gson().toJson(selectedItemsList)
+    }
+
+
+    fun getItemsByCategory(category: CategoryEntity) {
+        viewModelScope.launch {
+            val itemNames = stockManager.getItemNamesByCategory(category.categoryName)
+            val selectedItemIds = _selectedItems.value.keys
+            _stockItemsNames.value = itemNames.map {
+                StockItemSelection(id = it, name = it, isSelected = selectedItemIds.contains(it))
+            }
+        }
+    }
+
+    fun getItemsByShop(shop: ShopEntity) {
+        viewModelScope.launch {
+            val itemNames = stockManager.getItemNamesByShop(shop.shopName)
+            val selectedItemIds = _selectedItems.value.keys
+            _stockItemsNames.value = itemNames.map {
+                StockItemSelection(id = it, name = it, isSelected = selectedItemIds.contains(it))
+            }
+        }
+    }
+
+    // Get all selected stock items from the database------------------------------------------
+    fun saveSelectedStockItems(items: List<StockItemSelection>, listId: String) {
+        viewModelScope.launch {
+            stockManager.insertOrUpdateSelectedStockItems(items, listId)
+            // Update the in-memory state
+            val updatedItems = _selectedItems.value.toMutableMap()
+            items.forEach { updatedItems[it.id] = it }
+            _selectedItems.value = updatedItems
+        }
+    }
+
+    fun deleteSelectedStockItemsByListId(listId: String) {
+        viewModelScope.launch {
+            stockManager.deleteSelectedStockItemsByListId(listId)
+        }
+    }
+
+    fun saveSelectedStockItemList(list: SelectedStockItemList) {
+        viewModelScope.launch {
+            stockManager.insertSelectedStockItemList(list)
+            loadAllSelectedStockItemLists() // Reload lists
+        }
+    }
+
+    fun deleteSelectedStockItemList(listId: String) {
+        viewModelScope.launch {
+            stockManager.deleteSelectedStockItemList(listId)
+            loadAllSelectedStockItemLists() // Reload lists
+        }
+    }
+
+    fun loadAllSelectedStockItemLists() {
+        viewModelScope.launch {
+            _selectedItemLists.value = stockManager.getAllSelectedStockItemLists()
+        }
     }
 }

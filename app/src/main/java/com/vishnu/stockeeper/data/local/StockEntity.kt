@@ -10,5 +10,7 @@ data class StockEntity(
     val quantity: Int = 0,
     val expirationDate: Long = 0L,
     val purchaseDate: Long = 0L,
-    val updatedBy: String = ""
+    val updatedBy: String = "",
+    val category: String = "",
+    val shop: String = ""
 )

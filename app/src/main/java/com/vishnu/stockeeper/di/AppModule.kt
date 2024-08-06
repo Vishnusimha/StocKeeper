@@ -27,7 +27,13 @@ object AppModule {
 
     @Provides
     fun provideStockRepository(stockDatabase: StockDatabase): StockRepository {
-        return StockRepository(stockDatabase.stockItemDao())
+        return StockRepository(
+            stockItemDao = stockDatabase.stockItemDao(),
+            itemNameDao = stockDatabase.itemNameDao(),
+            categoryDao = stockDatabase.categoryDao(),
+            shopDao = stockDatabase.shopDao(),
+            selectedStockItemDao = stockDatabase.selectedStockItemDao()
+        )
     }
 
     @Provides

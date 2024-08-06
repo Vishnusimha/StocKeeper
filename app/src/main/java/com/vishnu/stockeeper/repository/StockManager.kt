@@ -2,7 +2,12 @@ package com.vishnu.stockeeper.repository
 
 import android.util.Log
 import com.vishnu.stockeeper.data.StockDto
+import com.vishnu.stockeeper.data.StockItemSelection
+import com.vishnu.stockeeper.data.local.CategoryEntity
+import com.vishnu.stockeeper.data.local.SelectedStockItemList
+import com.vishnu.stockeeper.data.local.ShopEntity
 import com.vishnu.stockeeper.data.local.StockEntity
+import com.vishnu.stockeeper.data.toSelectedStockItem
 import com.vishnu.stockeeper.data.toStockEntity
 import javax.inject.Inject
 
@@ -73,5 +78,46 @@ class StockManager @Inject constructor(
 
     suspend fun getAllItemNames(): List<String> {
         return localRepo.getAllItemNames()
+    }
+
+    suspend fun getAllCategories(): List<CategoryEntity> {
+        return localRepo.getAllCategories()
+    }
+
+    suspend fun getAllShops(): List<ShopEntity> {
+        return localRepo.getAllShops()
+    }
+
+    suspend fun getItemNamesByCategory(categoryName: String): List<String> {
+        return localRepo.getItemNamesByCategory(categoryName)
+    }
+
+    suspend fun getItemNamesByShop(shopName: String): List<String> {
+        return localRepo.getItemNamesByShop(shopName)
+    }
+
+    //    StockItemSelection
+    suspend fun insertSelectedStockItemList(list: SelectedStockItemList) {
+        localRepo.insertSelectedStockItemList(list)
+    }
+
+    suspend fun insertOrUpdateSelectedStockItems(items: List<StockItemSelection>, listId: String) {
+        localRepo.insertOrUpdateSelectedStockItems(items, listId)
+    }
+
+    suspend fun deleteSelectedStockItemsByListId(listId: String) {
+        localRepo.deleteSelectedStockItemsByListId(listId)
+    }
+
+    suspend fun deleteSelectedStockItemList(listId: String) {
+        localRepo.deleteSelectedStockItemList(listId)
+    }
+
+    suspend fun getSelectedStockItemsByListId(listId: String): List<StockItemSelection> {
+        return localRepo.getSelectedStockItemsByListId(listId)
+    }
+
+    suspend fun getAllSelectedStockItemLists(): List<SelectedStockItemList> {
+        return localRepo.getAllSelectedStockItemLists()
     }
 }
