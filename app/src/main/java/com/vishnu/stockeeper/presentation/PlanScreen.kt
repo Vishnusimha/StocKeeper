@@ -56,7 +56,6 @@ fun PlanScreen(stockViewModel: StockViewModel) {
     val stockCategories by stockViewModel.stockCategories.collectAsState(emptyList())
     val stockShops by stockViewModel.stockShops.collectAsState(emptyList())
     val selectedItemLists by stockViewModel.selectedItemLists.collectAsState(emptyList())
-    val selectedItemsForList by stockViewModel.selectedItemsForList.collectAsState(emptyList())
 
     val selectedItems = remember { mutableStateOf<Map<String, SelectedItem>>(emptyMap()) }
 
@@ -258,16 +257,6 @@ fun PlanScreen(stockViewModel: StockViewModel) {
                     stockViewModel.saveSelectedItems(itemList)
 
                     Log.i("PlanScreen", stockViewModel.getSelectedItemsAsJson())
-                    Log.i(
-                        "PlanScreen selectedItemLists 1, 2",
-                        "${
-                            selectedItemsForList.stream()
-                                .forEach { i -> println(i.itemName).toString() }
-                        },  ${
-                            selectedItemsForList.stream()
-                                .forEach { i -> println(i.itemId).toString() }
-                        }"
-                    )
                     val json = stockViewModel.getSelectedItemsAsJson()
                     Log.i("PlanScreen", json)
                     Log.i(
@@ -279,16 +268,16 @@ fun PlanScreen(stockViewModel: StockViewModel) {
                 }
 
 
-                Button(onClick = {
-                    stockViewModel.loadAllSelectedItemLists()
-                }) {
-                    Text(text = "Load All")
-                }
-                // Display saved plans
-                Text(
-                    text = "Saved Plans",
-                    style = MaterialTheme.typography.headlineMedium
-                )
+//                Button(onClick = {
+//                    stockViewModel.loadAllSelectedItemLists()
+//                }) {
+//                    Text(text = "Load All")
+//                }
+//                // Display saved plans
+//                Text(
+//                    text = "Saved Plans",
+//                    style = MaterialTheme.typography.headlineMedium
+//                )
 
 //                LazyColumn(
 //                    modifier = Modifier
@@ -300,7 +289,7 @@ fun PlanScreen(stockViewModel: StockViewModel) {
 //                            modifier = Modifier.clickable {
 //                                stockViewModel.loadItemsForList(list.listId)
 //                                Log.i("Hello",
-//                                    selectedItemsForList.stream()
+//                                    allSelectedItems.stream()
 //                                        .forEach { i -> println("${i.itemName}, ${i.quantity}") }
 //                                        .toString()
 //                                )
@@ -309,7 +298,8 @@ fun PlanScreen(stockViewModel: StockViewModel) {
 //                            supportingContent = { Text("Items: ${list.listId}") }
 //                        )
 //                    }
-//                }
+//
+
             }
         }
     }

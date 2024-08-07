@@ -96,7 +96,6 @@ class StockManager @Inject constructor(
     }
 
     //    SelectedItemDto
-
     suspend fun insertSelectedItemList(list: SelectedItemList) {
         localRepo.insertSelectedItemList(list)
     }

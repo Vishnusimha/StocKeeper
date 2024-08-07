@@ -36,6 +36,9 @@ class StockViewModel @Inject constructor(
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: Flow<Boolean> get() = _isRefreshing.asStateFlow()
 
+    private val _isPlanListsRefreshing = MutableStateFlow(false)
+    val isPlanListsRefreshing: Flow<Boolean> get() = _isPlanListsRefreshing.asStateFlow()
+
     private val _filteredItems = MutableStateFlow<List<StockEntity>>(emptyList())
     val filteredItems: Flow<List<StockEntity>> = _filteredItems
 
@@ -57,6 +60,8 @@ class StockViewModel @Inject constructor(
     private val _selectedItemsForList = MutableStateFlow<List<SelectedItem>>(emptyList())
     val selectedItemsForList: Flow<List<SelectedItem>> get() = _selectedItemsForList
 
+    private val _allSelectedItems = MutableStateFlow<Map<String, List<SelectedItem>>>(emptyMap())
+    val allSelectedItems: Flow<Map<String, List<SelectedItem>>> get() = _allSelectedItems
 
     private lateinit var itemNames: List<SelectedItemDto>
 
@@ -241,10 +246,18 @@ class StockViewModel @Inject constructor(
         }
     }
 
-    fun loadItemsForList(listId: String) {
+    fun loadAllItemsForPlanListsScreen() {
         viewModelScope.launch {
-            _selectedItemsForList.value = stockManager.getItemsForList(listId)
-            Log.i(TAG, "loadItemsForList")
+            _isPlanListsRefreshing.value = true
+            val lists = _selectedItemLists.value
+            val itemsMap = mutableMapOf<String, List<SelectedItem>>()
+
+            lists.forEach { list ->
+                itemsMap[list.listId] = stockManager.getItemsForList(list.listId)
+            }
+
+            _allSelectedItems.value = itemsMap
+            _isPlanListsRefreshing.value = false
         }
     }
 

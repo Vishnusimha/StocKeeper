@@ -116,6 +116,9 @@ class LandingActivity : ComponentActivity() {
             composable(Screen.PlanScreen.route) {
                 PlanScreen(stockViewModel)
             }
+            composable(Screen.PlanListsScreen.route) {
+                PlanListsScreen(stockViewModel, navController)
+            }
         }
     }
 
@@ -124,7 +127,7 @@ class LandingActivity : ComponentActivity() {
         val items = listOf(
             Screen.NotificationScreen,
             Screen.StockScreen,
-            Screen.PlanScreen,
+            Screen.PlanListsScreen,
             Screen.ProfileScreen
         )
 
