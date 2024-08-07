@@ -2,10 +2,9 @@ package com.vishnu.stockeeper.repository
 
 import android.util.Log
 import com.vishnu.stockeeper.data.StockDto
-import com.vishnu.stockeeper.data.local.CategoryEntity
-import com.vishnu.stockeeper.data.local.SelectedItem
-import com.vishnu.stockeeper.data.local.SelectedItemList
-import com.vishnu.stockeeper.data.local.ShopEntity
+import com.vishnu.stockeeper.data.local.PreparedPlanEntity
+import com.vishnu.stockeeper.data.local.ProductEntity
+import com.vishnu.stockeeper.data.local.SelectedProductEntity
 import com.vishnu.stockeeper.data.local.StockEntity
 import com.vishnu.stockeeper.data.toStockEntity
 import javax.inject.Inject
@@ -48,7 +47,7 @@ class StockManager @Inject constructor(
     }
 
     suspend fun getItemById(itemId: Int): StockEntity? {
-        return localRepo.getItemById(itemId)
+        return localRepo.getProductById(itemId)
     }
 
     suspend fun deleteAllItemsFromLocal() {
@@ -64,59 +63,63 @@ class StockManager @Inject constructor(
     }
 
     suspend fun getAllItemsSortedByName(): List<StockEntity> {
-        return localRepo.getAllItemsSortedByName()
+        return localRepo.getAllProductsSortedByName()
     }
 
     suspend fun getAllItemsSortedByExpirationDate(): List<StockEntity> {
-        return localRepo.getAllItemsSortedByExpirationDate()
+        return localRepo.getAllProductsSortedByExpirationDate()
     }
 
     suspend fun getAllItemsSortedByQuantity(): List<StockEntity> {
-        return localRepo.getAllItemsSortedByQuantity()
+        return localRepo.getAllProductsSortedByQuantity()
     }
 
-    suspend fun getAllItemNames(): List<String> {
-        return localRepo.getAllItemNames()
+    suspend fun getAllStockItemNames(): List<String> {
+        return localRepo.getAllStockProductNames()
     }
 
-    suspend fun getAllCategories(): List<CategoryEntity> {
+    suspend fun getAllProducts(): List<ProductEntity> {
+        return localRepo.getAllProducts()
+    }
+
+    suspend fun getAllCategories(): List<String> {
         return localRepo.getAllCategories()
     }
 
-    suspend fun getAllShops(): List<ShopEntity> {
+    suspend fun getAllShops(): List<String> {
         return localRepo.getAllShops()
     }
 
-    suspend fun getItemNamesByCategory(categoryName: String): List<String> {
-        return localRepo.getItemNamesByCategory(categoryName)
+    suspend fun getProductsByCategory(categoryName: String): List<String> {
+        return localRepo.getProductsByCategory(categoryName)
     }
 
-    suspend fun getItemNamesByShop(shopName: String): List<String> {
-        return localRepo.getItemNamesByShop(shopName)
+    suspend fun getProductsByShop(shopName: String): List<String> {
+        return localRepo.getProductsByShop(shopName)
     }
 
-    //    SelectedItemDto
-    suspend fun insertSelectedItemList(list: SelectedItemList) {
-        localRepo.insertSelectedItemList(list)
+    //    SelectedProductDto
+    suspend fun insertSelectedProductList(list: PreparedPlanEntity) {
+        localRepo.insertSelectedProductList(list)
     }
 
-    suspend fun insertOrUpdateSelectedItems(items: List<SelectedItem>) {
-        localRepo.insertOrUpdateSelectedItems(items)
+    suspend fun insertOrUpdateSelectedProducts(selectedProductEntities: List<SelectedProductEntity>) {
+        localRepo.insertOrUpdateSelectedProducts(selectedProductEntities)
     }
 
-    suspend fun deleteSelectedItemsByListId(listId: String) {
-        localRepo.deleteSelectedItemsByListId(listId)
+    suspend fun deleteSelectedProductsByListId(listId: String) {
+        localRepo.deleteSelectedProductsByListId(listId)
     }
 
-    suspend fun deleteSelectedItemList(listId: String) {
-        localRepo.deleteSelectedItemList(listId)
+    suspend fun deleteSelectedProductList(listId: String) {
+        localRepo.deleteSelectedProductList(listId)
     }
 
-    suspend fun getAllSelectedItemLists(): List<SelectedItemList> {
-        return localRepo.getAllSelectedItemLists()
+    suspend fun getAllPreparedPlanLists(): List<PreparedPlanEntity> {
+        return localRepo.getAllSelectedProductLists()
     }
 
-    suspend fun getItemsForList(listId: String): List<SelectedItem> {
-        return localRepo.getItemsForList(listId)
+    suspend fun getPreparedPlan(listId: String): List<SelectedProductEntity> {
+        return localRepo.getPreparedPlan(listId)
     }
 }

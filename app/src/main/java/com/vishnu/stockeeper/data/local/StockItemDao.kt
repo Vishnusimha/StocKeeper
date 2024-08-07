@@ -21,7 +21,7 @@ interface StockItemDao {
     suspend fun getAllItems(): List<StockEntity>
 
     @Query("SELECT * FROM stock_items WHERE id = :itemId")
-    suspend fun getItemById(itemId: Int): StockEntity?
+    suspend fun getProductById(itemId: Int): StockEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(items: List<StockEntity>)
@@ -32,18 +32,18 @@ interface StockItemDao {
     //Sorting
     // Get all items sorted by name
     @Query("SELECT * FROM stock_items ORDER BY name DESC")
-    suspend fun getAllItemsSortedByName(): List<StockEntity>
+    suspend fun getAllProductsSortedByName(): List<StockEntity>
 
     // Get all items sorted by expiration date
     @Query("SELECT * FROM stock_items ORDER BY expirationDate DESC")
-    suspend fun getAllItemsSortedByExpirationDate(): List<StockEntity>
+    suspend fun getAllProductsSortedByExpirationDate(): List<StockEntity>
 
     // Get all items sorted by quantity
     @Query("SELECT * FROM stock_items ORDER BY quantity DESC")
-    suspend fun getAllItemsSortedByQuantity(): List<StockEntity>
+    suspend fun getAllProductsSortedByQuantity(): List<StockEntity>
 
     @Query("SELECT name FROM stock_items")
-    suspend fun getAllItemNames(): List<String>
+    suspend fun getAllStockProductNames(): List<String>
 
     // Filtering item names by category
     @Query("SELECT name FROM stock_items WHERE category = :categoryName ORDER BY name DESC")

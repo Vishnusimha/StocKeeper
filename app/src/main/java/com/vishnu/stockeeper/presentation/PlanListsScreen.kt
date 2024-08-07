@@ -1,5 +1,6 @@
 package com.vishnu.stockeeper.presentation
 
+import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -23,26 +24,28 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.SwipeRefreshState
-import com.vishnu.stockeeper.data.local.SelectedItem
-import com.vishnu.stockeeper.data.local.SelectedItemList
+import com.vishnu.stockeeper.data.local.PreparedPlanEntity
+import com.vishnu.stockeeper.data.local.SelectedProductEntity
+import com.vishnu.stockeeper.data.longToDate
 import com.vishnu.stockeeper.viewmodel.StockViewModel
 import kotlinx.coroutines.launch
 
 @Composable
 fun PlanListsScreen(stockViewModel: StockViewModel, navController: NavHostController) {
-    val selectedItemLists by stockViewModel.selectedItemLists.collectAsState(emptyList())
-    val allSelectedItems by stockViewModel.allSelectedItems.collectAsState(emptyMap())
+    val preparedPlansLists by stockViewModel.preparedPlansLists.collectAsState(emptyList())
+    val preparedPlansMapWithID by stockViewModel.preparedPlansMapWithID.collectAsState(emptyMap())
     val coroutineScope = rememberCoroutineScope()
     val isPlanListsRefreshing by stockViewModel.isPlanListsRefreshing.collectAsState(false)
 
     LaunchedEffect(Unit) {
-        stockViewModel.loadAllSelectedItemLists()
-        stockViewModel.loadAllItemsForPlanListsScreen()
+        stockViewModel.getAllPreparedPlanLists()
+        stockViewModel.loadAllPreparedPlans()
     }
 
     Scaffold(
@@ -59,8 +62,8 @@ fun PlanListsScreen(stockViewModel: StockViewModel, navController: NavHostContro
             state = SwipeRefreshState(isRefreshing = isPlanListsRefreshing),
             onRefresh = {
                 coroutineScope.launch {
-                    stockViewModel.loadAllSelectedItemLists()
-                    stockViewModel.loadAllItemsForPlanListsScreen()
+                    stockViewModel.getAllPreparedPlanLists()
+                    stockViewModel.loadAllPreparedPlans()
                 }
             }
         ) {
@@ -75,29 +78,56 @@ fun PlanListsScreen(stockViewModel: StockViewModel, navController: NavHostContro
                         }
                     )
             ) {
-
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp)
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    items(selectedItemLists) { selectedItemList ->
-                        SelectedItemListCard(
-                            selectedItemList = selectedItemList,
-                            itemsForList = allSelectedItems[selectedItemList.listId] ?: emptyList()
-                        )
+                    Text(
+                        text = "Plan Maker",
+                        style = MaterialTheme.typography.headlineMedium
+                    )
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp)
+                    ) {
+                        items(preparedPlansLists) { selectedItemList ->
+                            val items =
+                                preparedPlansMapWithID[selectedItemList.listId] ?: emptyList()
+                            // Log to verify the data being passed
+                            Log.d(
+                                "PlanListsScreen",
+                                "List: ${selectedItemList.listName}, Items: ${items.joinToString { it.itemName }}"
+                            )
+
+                            SelectedItemListCard(
+                                preparedPlanEntity = selectedItemList,
+                                itemsForList = items
+                            )
+                        }
                     }
                 }
-
             }
         }
 
     }
 }
 
-
 @Composable
-fun SelectedItemListCard(selectedItemList: SelectedItemList, itemsForList: List<SelectedItem>) {
+fun SelectedItemListCard(
+    preparedPlanEntity: PreparedPlanEntity,
+    itemsForList: List<SelectedProductEntity>
+) {
+    // Group items by shop name
+    val itemsGroupedByShop = itemsForList.groupBy { it.shopName ?: "Unknown Shop" }
+
+    // Log grouping to verify correctness
+    itemsGroupedByShop.forEach { (shopName, items) ->
+        Log.d(
+            "SelectedItemListCard",
+            "Shop: $shopName, Items: ${items.joinToString { it.itemName }}"
+        )
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -107,22 +137,38 @@ fun SelectedItemListCard(selectedItemList: SelectedItemList, itemsForList: List<
         Column(
             modifier = Modifier.padding(16.dp)
         ) {
-            Text(text = selectedItemList.listName, style = MaterialTheme.typography.headlineSmall)
+            // Display list name
+            Text(
+                text = longToDate(preparedPlanEntity.listName.toLong()).toString(),
+                style = MaterialTheme.typography.headlineSmall
+            )
             Spacer(modifier = Modifier.height(8.dp))
 
+            // Check if the list of items is empty
             if (itemsForList.isEmpty()) {
                 Text(text = "No items in this list")
             } else {
-                itemsForList.forEach { item ->
+                // Display grouped items
+                itemsGroupedByShop.forEach { (shopName, items) ->
+                    // Display shop name
                     Text(
-                        text = "${item.itemName}: ${item.quantity}",
-                        style = MaterialTheme.typography.bodySmall
+                        text = shopName,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(vertical = 8.dp)
                     )
+
+                    // Display items under the shop
+                    items.forEach { item ->
+                        Text(
+                            text = "${item.itemName}: ${item.quantity}",
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(vertical = 4.dp)
+                        )
+                    }
                 }
             }
         }
     }
 }
-
 
 

@@ -4,21 +4,23 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 
 @Entity(
-    tableName = "SelectedItems",
+    tableName = "SelectedProducts",
     foreignKeys = [
         ForeignKey(
-            entity = SelectedItemList::class,
+            entity = PreparedPlanEntity::class,
             parentColumns = ["listId"],
             childColumns = ["listId"],
             onDelete = ForeignKey.CASCADE
         )
     ],
-    primaryKeys = ["itemId", "listId"]
+    primaryKeys = ["productId", "listId"]
 )
-data class SelectedItem(
-    val itemId: String,
+data class SelectedProductEntity(
+    val productId: String,
     val listId: String,
     val itemName: String,
     val isSelected: Boolean,
-    val quantity: Int
+    val quantity: Int,
+    val shopName: String,
+    val categoryName: String
 )

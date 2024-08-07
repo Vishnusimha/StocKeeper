@@ -41,30 +41,30 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.vishnu.stockeeper.data.SelectedItemDto
-import com.vishnu.stockeeper.data.local.CategoryEntity
-import com.vishnu.stockeeper.data.local.SelectedItem
-import com.vishnu.stockeeper.data.local.SelectedItemList
-import com.vishnu.stockeeper.data.local.ShopEntity
+import com.vishnu.stockeeper.data.SelectedProductDto
+import com.vishnu.stockeeper.data.dateToLong
+import com.vishnu.stockeeper.data.local.PreparedPlanEntity
+import com.vishnu.stockeeper.data.local.SelectedProductEntity
 import com.vishnu.stockeeper.data.toSelectedItemDto
 import com.vishnu.stockeeper.viewmodel.StockViewModel
+import java.util.Date
 import java.util.UUID
 
 @Composable
 fun PlanScreen(stockViewModel: StockViewModel) {
-    val stockItemsNames by stockViewModel.stockItemsNames.collectAsState(emptyList())
-    val stockCategories by stockViewModel.stockCategories.collectAsState(emptyList())
-    val stockShops by stockViewModel.stockShops.collectAsState(emptyList())
-    val selectedItemLists by stockViewModel.selectedItemLists.collectAsState(emptyList())
+    val productNames by stockViewModel.productNames.collectAsState(emptyList())
+    val productCategories by stockViewModel.productCategories.collectAsState(emptyList())
+    val productShops by stockViewModel.productShops.collectAsState(emptyList())
 
-    val selectedItems = remember { mutableStateOf<Map<String, SelectedItem>>(emptyMap()) }
+    val selectedItemsEntity =
+        remember { mutableStateOf<Map<String, SelectedProductEntity>>(emptyMap()) }
 
     var isAllChecked by remember { mutableStateOf(false) }
     var isCategoryChecked by remember { mutableStateOf(false) }
     var isShopChecked by remember { mutableStateOf(false) }
 
-    var selectedCategory by remember { mutableStateOf<CategoryEntity?>(null) }
-    var selectedShop by remember { mutableStateOf<ShopEntity?>(null) }
+    var selectedCategory by remember { mutableStateOf<String?>(null) }
+    var selectedShop by remember { mutableStateOf<String?>(null) }
 
     Box(
         modifier = Modifier
@@ -77,7 +77,7 @@ fun PlanScreen(stockViewModel: StockViewModel) {
             verticalArrangement = Arrangement.Center
         ) {
             Text(
-                text = "Plan Screen",
+                text = "Plan Maker",
                 style = MaterialTheme.typography.headlineSmall
             )
             Spacer(modifier = Modifier.height(16.dp))
@@ -156,15 +156,15 @@ fun PlanScreen(stockViewModel: StockViewModel) {
                         .padding(vertical = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(stockCategories) { category ->
+                    items(productCategories) { category ->
                         FilterChip(
                             selected = selectedCategory == category,
                             onClick = {
                                 selectedCategory =
                                     if (selectedCategory == category) null else category
-                                stockViewModel.getItemsByCategory(category)
+                                stockViewModel.getProductsByCategory(category)
                             },
-                            label = { Text(category.categoryName) },
+                            label = { Text(category) },
                             leadingIcon = {
                                 if (selectedCategory == category) {
                                     Icon(
@@ -185,15 +185,15 @@ fun PlanScreen(stockViewModel: StockViewModel) {
                         .padding(vertical = 8.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    items(stockShops) { shop ->
+                    items(productShops) { shop ->
                         FilterChip(
                             selected = selectedShop == shop,
                             onClick = {
                                 selectedShop =
                                     if (selectedShop == shop) null else shop
-                                stockViewModel.getItemsByShop(shop)
+                                stockViewModel.getProductsByShop(shop)
                             },
-                            label = { Text(shop.shopName) },
+                            label = { Text(shop) },
                             leadingIcon = {
                                 if (selectedShop == shop) {
                                     Icon(
@@ -207,7 +207,7 @@ fun PlanScreen(stockViewModel: StockViewModel) {
                 }
             }
 
-            if (stockItemsNames.isEmpty()) {
+            if (productNames.isEmpty()) {
                 Text(text = "No stock items available")
             } else {
                 LazyColumn(
@@ -217,54 +217,60 @@ fun PlanScreen(stockViewModel: StockViewModel) {
                         .padding(8.dp)
                         .padding(bottom = 16.dp)
                 ) {
-                    items(stockItemsNames) { item ->
-                        val selectedItem = selectedItems.value[item.itemId] ?: SelectedItem(
-                            itemId = item.itemId,
-                            listId = item.listId,
-                            itemName = item.itemName,
-                            isSelected = false,
-                            quantity = 0
-                        )
+                    items(productNames) { item ->
+                        val selectedProductEntity =
+                            selectedItemsEntity.value[item.itemId] ?: SelectedProductEntity(
+                                productId = item.itemId,
+                                listId = item.listId,
+                                itemName = item.itemName,
+                                isSelected = item.isSelected,
+                                quantity = item.quantity,
+                                shopName = item.shopName,
+                                categoryName = item.categoryName
+                            )
 
                         StockItemRow(
-                            item = selectedItem.toSelectedItemDto(),
+                            item = selectedProductEntity.toSelectedItemDto(),
                             onSelectionChange = { isSelected ->
-                                val updatedItem = selectedItem.copy(isSelected = isSelected)
-                                selectedItems.value = selectedItems.value.toMutableMap().apply {
-                                    put(updatedItem.itemId, updatedItem)
-                                }
-                                stockViewModel.updateSelection(updatedItem.itemId, isSelected)
+                                val updatedItem =
+                                    selectedProductEntity.copy(isSelected = isSelected)
+                                selectedItemsEntity.value =
+                                    selectedItemsEntity.value.toMutableMap().apply {
+                                        put(updatedItem.productId, updatedItem)
+                                    }
+                                stockViewModel.updateSelection(updatedItem.productId, isSelected)
                             },
                             onQuantityChange = { quantity ->
-                                val updatedItem = selectedItem.copy(quantity = quantity)
-                                selectedItems.value = selectedItems.value.toMutableMap().apply {
-                                    put(updatedItem.itemId, updatedItem)
-                                }
-                                stockViewModel.updateQuantity(updatedItem.itemId, quantity)
+                                val updatedItem = selectedProductEntity.copy(quantity = quantity)
+                                selectedItemsEntity.value =
+                                    selectedItemsEntity.value.toMutableMap().apply {
+                                        put(updatedItem.productId, updatedItem)
+                                    }
+                                stockViewModel.updateQuantity(updatedItem.productId, quantity)
                             }
                         )
                     }
                 }
 
                 Button(onClick = {
-                    val selectedItemsList = selectedItems.value.values.toList()
+                    val selectedProducts = selectedItemsEntity.value.values.toList()
                     val listId = UUID.randomUUID().toString() // Generate a unique ID for the list
-                    val listName = "Selected Items" // Customize the list name
-                    val itemList = selectedItemsList.map {
+                    val listName = dateToLong(Date())// Customize the list name
+                    val preparedPlan = selectedProducts.map {
                         it.copy(listId = listId) // Update listId for each item
                     }
-                    stockViewModel.saveSelectedItemList(SelectedItemList(listId, listName))
-                    stockViewModel.saveSelectedItems(itemList)
+                    stockViewModel.savePlanListIdAndName(
+                        PreparedPlanEntity(
+                            listId,
+                            listName.toString()
+                        )
+                    )
+                    stockViewModel.savePreparedPlan(preparedPlan)
 
-                    Log.i("PlanScreen", stockViewModel.getSelectedItemsAsJson())
                     val json = stockViewModel.getSelectedItemsAsJson()
                     Log.i("PlanScreen", json)
-                    Log.i(
-                        "PlanScreen selectedItemLists",
-                        selectedItemLists.joinToString { it.listName }
-                    )
                 }) {
-                    Text(text = "Export as JSON")
+                    Text(text = "Generate Plan")
                 }
             }
         }
@@ -274,7 +280,7 @@ fun PlanScreen(stockViewModel: StockViewModel) {
 
 @Composable
 fun StockItemRow(
-    item: SelectedItemDto,
+    item: SelectedProductDto,
     onSelectionChange: (Boolean) -> Unit,
     onQuantityChange: (Int) -> Unit
 ) {

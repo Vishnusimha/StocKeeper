@@ -6,10 +6,10 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 
 @Dao
-interface SelectedItemDao {
+interface SelectedProductDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAll(selectedItems: List<SelectedItem>)
+    suspend fun insertAll(selectedProductEntities: List<SelectedProductEntity>)
 
-    @Query("SELECT * FROM SelectedItems WHERE listId = :listId")
-    suspend fun getItemsForList(listId: String): List<SelectedItem>
+    @Query("SELECT * FROM SelectedProducts WHERE listId = :listId")
+    suspend fun getPreparedPlan(listId: String): List<SelectedProductEntity>
 }

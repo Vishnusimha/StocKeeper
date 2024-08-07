@@ -6,12 +6,10 @@ import androidx.lifecycle.viewModelScope
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.google.gson.Gson
-import com.vishnu.stockeeper.data.SelectedItemDto
+import com.vishnu.stockeeper.data.SelectedProductDto
 import com.vishnu.stockeeper.data.StockDto
-import com.vishnu.stockeeper.data.local.CategoryEntity
-import com.vishnu.stockeeper.data.local.SelectedItem
-import com.vishnu.stockeeper.data.local.SelectedItemList
-import com.vishnu.stockeeper.data.local.ShopEntity
+import com.vishnu.stockeeper.data.local.PreparedPlanEntity
+import com.vishnu.stockeeper.data.local.SelectedProductEntity
 import com.vishnu.stockeeper.data.local.StockEntity
 import com.vishnu.stockeeper.data.toStockEntity
 import com.vishnu.stockeeper.repository.StockManager
@@ -30,40 +28,41 @@ class StockViewModel @Inject constructor(
     private val stockManager: StockManager,
 ) : ViewModel() {
 
-    private val _stockItems = MutableStateFlow<List<StockEntity>>(emptyList())
-    val stockItems: Flow<List<StockEntity>> get() = _stockItems.asStateFlow()
-
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: Flow<Boolean> get() = _isRefreshing.asStateFlow()
 
     private val _isPlanListsRefreshing = MutableStateFlow(false)
     val isPlanListsRefreshing: Flow<Boolean> get() = _isPlanListsRefreshing.asStateFlow()
 
+    //    Stock details for stock screen
+    private val _stockItems = MutableStateFlow<List<StockEntity>>(emptyList())
+    val stockItems: Flow<List<StockEntity>> get() = _stockItems.asStateFlow()
+
     private val _filteredItems = MutableStateFlow<List<StockEntity>>(emptyList())
     val filteredItems: Flow<List<StockEntity>> = _filteredItems
 
-    private val _stockItemsNames = MutableStateFlow<List<SelectedItemDto>>(emptyList())
-    val stockItemsNames: Flow<List<SelectedItemDto>> get() = _stockItemsNames.asStateFlow()
+    // Product names for plan screen
+    private val _productNames = MutableStateFlow<List<SelectedProductDto>>(emptyList())
+    val productNames: Flow<List<SelectedProductDto>> get() = _productNames.asStateFlow()
 
-    private val _stockCategories = MutableStateFlow<List<CategoryEntity>>(emptyList())
-    val stockCategories: Flow<List<CategoryEntity>> get() = _stockCategories.asStateFlow()
+    private val _productCategories = MutableStateFlow<List<String>>(emptyList())
+    val productCategories: Flow<List<String>> get() = _productCategories.asStateFlow()
 
-    private val _stockShops = MutableStateFlow<List<ShopEntity>>(emptyList())
-    val stockShops: Flow<List<ShopEntity>> get() = _stockShops.asStateFlow()
+    private val _productShops = MutableStateFlow<List<String>>(emptyList())
+    val productShops: Flow<List<String>> get() = _productShops.asStateFlow()
 
-    private val _selectedItems = MutableStateFlow<Map<String, SelectedItemDto>>(emptyMap())
-    val selectedItems: Flow<Map<String, SelectedItemDto>> = _selectedItems.asStateFlow()
+    // Product names for plan screen - > using while making plan
+    private val _selectedProductsToMakePlan =
+        MutableStateFlow<Map<String, SelectedProductDto>>(emptyMap())
 
-    private val _selectedItemLists = MutableStateFlow<List<SelectedItemList>>(emptyList())
-    val selectedItemLists: Flow<List<SelectedItemList>> get() = _selectedItemLists
+    private val _preparedPlansLists = MutableStateFlow<List<PreparedPlanEntity>>(emptyList())
+    val preparedPlansLists: Flow<List<PreparedPlanEntity>> get() = _preparedPlansLists
 
-    private val _selectedItemsForList = MutableStateFlow<List<SelectedItem>>(emptyList())
-    val selectedItemsForList: Flow<List<SelectedItem>> get() = _selectedItemsForList
+    private val _preparedPlansMapWithID =
+        MutableStateFlow<Map<String, List<SelectedProductEntity>>>(emptyMap())
+    val preparedPlansMapWithID: Flow<Map<String, List<SelectedProductEntity>>> get() = _preparedPlansMapWithID
 
-    private val _allSelectedItems = MutableStateFlow<Map<String, List<SelectedItem>>>(emptyMap())
-    val allSelectedItems: Flow<Map<String, List<SelectedItem>>> get() = _allSelectedItems
-
-    private lateinit var itemNames: List<SelectedItemDto>
+    private lateinit var itemNames: List<SelectedProductDto>
 
     init {
         stockManager.observeStockItems { itemsFromFirebase ->
@@ -135,13 +134,13 @@ class StockViewModel @Inject constructor(
 
     fun getAllCategories() {
         viewModelScope.launch {
-            _stockCategories.value = stockManager.getAllCategories()
+            _productCategories.value = stockManager.getAllCategories()
         }
     }
 
     fun getAllShops() {
         viewModelScope.launch {
-            _stockShops.value = stockManager.getAllShops()
+            _productShops.value = stockManager.getAllShops()
         }
     }
 
@@ -156,24 +155,33 @@ class StockViewModel @Inject constructor(
 
     fun fetchItemNames() {
         viewModelScope.launch {
-            val itemNames = stockManager.getAllItemNames()
-            val selectedItemIds = _selectedItems.value.keys
-            _stockItemsNames.value = itemNames.map {
-                SelectedItemDto(
-                    itemId = it,
-                    itemName = it,
-                    listId = it,
-                    isSelected = selectedItemIds.contains(it)
+            val itemNames = stockManager.getAllProducts()
+            val selectedItemIds = _selectedProductsToMakePlan.value.keys
+            _productNames.value = itemNames.map {
+                SelectedProductDto(
+                    itemId = it.name,
+                    itemName = it.name,
+                    listId = it.toString(),
+                    isSelected = selectedItemIds.contains(it.name),
+                    shopName = it.shopName,
+                    categoryName = it.categoryName
                 )
             }
         }
     }
 
     fun updateSelection(id: String, isSelected: Boolean) {
-        _selectedItems.update { currentItems ->
+        _selectedProductsToMakePlan.update { currentItems ->
             if (isSelected) {
                 currentItems + (id to (currentItems[id]?.copy(isSelected = true)
-                    ?: SelectedItemDto(id, itemName = "", listId = id, isSelected = true)))
+                    ?: SelectedProductDto(
+                        id,
+                        itemName = "",
+                        listId = id,
+                        isSelected = true,
+                        shopName = "",
+                        categoryName = ""
+                    )))
             } else {
                 currentItems - id
             }
@@ -181,97 +189,99 @@ class StockViewModel @Inject constructor(
     }
 
     fun updateQuantity(id: String, quantity: Int) {
-        _selectedItems.update { currentItems ->
+        _selectedProductsToMakePlan.update { currentItems ->
             currentItems[id]?.let { currentItem ->
                 currentItems + (id to currentItem.copy(quantity = quantity))
             } ?: currentItems
         }
     }
 
-
     fun getSelectedItemsAsJson(): String {
-        val selectedItemsList = _selectedItems.value.values.toList()
+        val selectedItemsList = _selectedProductsToMakePlan.value.values.toList()
         return Gson().toJson(selectedItemsList)
     }
 
-
-    fun getItemsByCategory(category: CategoryEntity) {
+    fun getProductsByCategory(category: String) {
         viewModelScope.launch {
-            val itemNames = stockManager.getItemNamesByCategory(category.categoryName)
-            val selectedItemIds = _selectedItems.value.keys
-            _stockItemsNames.value = itemNames.map {
-                SelectedItemDto(
+            val itemNames = stockManager.getProductsByCategory(category)
+            val selectedItemIds = _selectedProductsToMakePlan.value.keys
+            _productNames.value = itemNames.map {
+                SelectedProductDto(
                     itemId = it,
                     itemName = it,
                     listId = it,
-                    isSelected = selectedItemIds.contains(it)
+                    isSelected = selectedItemIds.contains(it),
+                    shopName = it,
+                    categoryName = category
                 )
             }
         }
     }
 
-    fun getItemsByShop(shop: ShopEntity) {
+    fun getProductsByShop(shop: String) {
         viewModelScope.launch {
-            val itemNames = stockManager.getItemNamesByShop(shop.shopName)
-            val selectedItemIds = _selectedItems.value.keys
-            _stockItemsNames.value = itemNames.map {
-                SelectedItemDto(
+            val itemNames = stockManager.getProductsByShop(shop)
+            val selectedItemIds = _selectedProductsToMakePlan.value.keys
+            _productNames.value = itemNames.map {
+                SelectedProductDto(
                     itemId = it,
                     itemName = it,
                     listId = it,
-                    isSelected = selectedItemIds.contains(it)
+                    isSelected = selectedItemIds.contains(it),
+                    shopName = shop,
+                    categoryName = it
                 )
             }
         }
     }
 
     // Get all selected stock items from the database------------------------------------------
-    fun saveSelectedItemList(list: SelectedItemList) {
+    fun savePlanListIdAndName(preparedPlanEntity: PreparedPlanEntity) {
         viewModelScope.launch {
-            stockManager.insertSelectedItemList(list)
-            loadAllSelectedItemLists()
+            stockManager.insertSelectedProductList(preparedPlanEntity)
+            getAllPreparedPlanLists()
         }
     }
 
-    fun saveSelectedItems(items: List<SelectedItem>) {
+    fun savePreparedPlan(items: List<SelectedProductEntity>) {
         viewModelScope.launch {
-            stockManager.insertOrUpdateSelectedItems(items)
+            stockManager.insertOrUpdateSelectedProducts(items)
         }
     }
 
-    fun loadAllSelectedItemLists() {
+    fun getAllPreparedPlanLists() {
         viewModelScope.launch {
-            _selectedItemLists.value = stockManager.getAllSelectedItemLists()
+            _preparedPlansLists.value = stockManager.getAllPreparedPlanLists()
             Log.i(TAG, "loadAllSelectedItemLists")
         }
     }
 
-    fun loadAllItemsForPlanListsScreen() {
+    fun loadAllPreparedPlans() {
         viewModelScope.launch {
             _isPlanListsRefreshing.value = true
-            val lists = _selectedItemLists.value
-            val itemsMap = mutableMapOf<String, List<SelectedItem>>()
+            val lists = _preparedPlansLists.value
+            val itemsMap = mutableMapOf<String, List<SelectedProductEntity>>()
 
             lists.forEach { list ->
-                itemsMap[list.listId] = stockManager.getItemsForList(list.listId)
+                itemsMap[list.listId] = stockManager.getPreparedPlan(list.listId)
             }
 
-            _allSelectedItems.value = itemsMap
+            _preparedPlansMapWithID.value = itemsMap
             _isPlanListsRefreshing.value = false
         }
     }
 
     fun deleteSelectedItemsByListId(listId: String) {
         viewModelScope.launch {
-            stockManager.deleteSelectedItemsByListId(listId)
-            loadAllSelectedItemLists()
+            stockManager.deleteSelectedProductsByListId(listId)
+            getAllPreparedPlanLists()
         }
     }
 
     fun deleteSelectedItemList(listId: String) {
         viewModelScope.launch {
-            stockManager.deleteSelectedItemList(listId)
-            loadAllSelectedItemLists()
+            stockManager.deleteSelectedProductList(listId)
+            getAllPreparedPlanLists()
         }
     }
 }
