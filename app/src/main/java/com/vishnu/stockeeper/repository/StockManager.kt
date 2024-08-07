@@ -2,12 +2,11 @@ package com.vishnu.stockeeper.repository
 
 import android.util.Log
 import com.vishnu.stockeeper.data.StockDto
-import com.vishnu.stockeeper.data.StockItemSelection
 import com.vishnu.stockeeper.data.local.CategoryEntity
-import com.vishnu.stockeeper.data.local.SelectedStockItemList
+import com.vishnu.stockeeper.data.local.SelectedItem
+import com.vishnu.stockeeper.data.local.SelectedItemList
 import com.vishnu.stockeeper.data.local.ShopEntity
 import com.vishnu.stockeeper.data.local.StockEntity
-import com.vishnu.stockeeper.data.toSelectedStockItem
 import com.vishnu.stockeeper.data.toStockEntity
 import javax.inject.Inject
 
@@ -96,28 +95,29 @@ class StockManager @Inject constructor(
         return localRepo.getItemNamesByShop(shopName)
     }
 
-    //    StockItemSelection
-    suspend fun insertSelectedStockItemList(list: SelectedStockItemList) {
-        localRepo.insertSelectedStockItemList(list)
+    //    SelectedItemDto
+
+    suspend fun insertSelectedItemList(list: SelectedItemList) {
+        localRepo.insertSelectedItemList(list)
     }
 
-    suspend fun insertOrUpdateSelectedStockItems(items: List<StockItemSelection>, listId: String) {
-        localRepo.insertOrUpdateSelectedStockItems(items, listId)
+    suspend fun insertOrUpdateSelectedItems(items: List<SelectedItem>) {
+        localRepo.insertOrUpdateSelectedItems(items)
     }
 
-    suspend fun deleteSelectedStockItemsByListId(listId: String) {
-        localRepo.deleteSelectedStockItemsByListId(listId)
+    suspend fun deleteSelectedItemsByListId(listId: String) {
+        localRepo.deleteSelectedItemsByListId(listId)
     }
 
-    suspend fun deleteSelectedStockItemList(listId: String) {
-        localRepo.deleteSelectedStockItemList(listId)
+    suspend fun deleteSelectedItemList(listId: String) {
+        localRepo.deleteSelectedItemList(listId)
     }
 
-    suspend fun getSelectedStockItemsByListId(listId: String): List<StockItemSelection> {
-        return localRepo.getSelectedStockItemsByListId(listId)
+    suspend fun getAllSelectedItemLists(): List<SelectedItemList> {
+        return localRepo.getAllSelectedItemLists()
     }
 
-    suspend fun getAllSelectedStockItemLists(): List<SelectedStockItemList> {
-        return localRepo.getAllSelectedStockItemLists()
+    suspend fun getItemsForList(listId: String): List<SelectedItem> {
+        return localRepo.getItemsForList(listId)
     }
 }

@@ -32,7 +32,8 @@ object AppModule {
             itemNameDao = stockDatabase.itemNameDao(),
             categoryDao = stockDatabase.categoryDao(),
             shopDao = stockDatabase.shopDao(),
-            selectedStockItemDao = stockDatabase.selectedStockItemDao()
+            selectedItemDao = stockDatabase.selectedStockItemDao(),
+            selectedItemListDao = stockDatabase.selectedItemListDao(),
         )
     }
 

@@ -1,6 +1,6 @@
 package com.vishnu.stockeeper.data
 
-import com.vishnu.stockeeper.data.local.SelectedStockItem
+import com.vishnu.stockeeper.data.local.SelectedItem
 import com.vishnu.stockeeper.data.local.StockEntity
 import java.util.Date
 
@@ -38,20 +38,21 @@ fun dateToLong(date: Date): Long {
     return date.time
 }
 
-fun StockItemSelection.toSelectedStockItem(listId: String): SelectedStockItem {
-    return SelectedStockItem(
-        id = this.id,
-        name = this.name,
+fun SelectedItemDto.toSelectedItem(): SelectedItem {
+    return SelectedItem(
+        itemId = this.itemId,
+        listId = this.listId,
+        itemName = this.itemName,
         isSelected = this.isSelected,
-        quantity = this.quantity,
-        listId = listId
+        quantity = this.quantity
     )
 }
 
-fun SelectedStockItem.toStockItemSelection(): StockItemSelection {
-    return StockItemSelection(
-        id = this.id,
-        name = this.name,
+fun SelectedItem.toSelectedItemDto(): SelectedItemDto {
+    return SelectedItemDto(
+        itemId = this.itemId,
+        listId = this.listId,
+        itemName = this.itemName,
         isSelected = this.isSelected,
         quantity = this.quantity
     )

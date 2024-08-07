@@ -1,18 +1,17 @@
 package com.vishnu.stockeeper.repository
 
-import com.vishnu.stockeeper.data.StockItemSelection
 import com.vishnu.stockeeper.data.local.CategoryDao
 import com.vishnu.stockeeper.data.local.CategoryEntity
 import com.vishnu.stockeeper.data.local.ItemNameDao
 import com.vishnu.stockeeper.data.local.ItemNameEntity
-import com.vishnu.stockeeper.data.local.SelectedStockItemDao
-import com.vishnu.stockeeper.data.local.SelectedStockItemList
+import com.vishnu.stockeeper.data.local.SelectedItem
+import com.vishnu.stockeeper.data.local.SelectedItemDao
+import com.vishnu.stockeeper.data.local.SelectedItemList
+import com.vishnu.stockeeper.data.local.SelectedItemListDao
 import com.vishnu.stockeeper.data.local.ShopDao
 import com.vishnu.stockeeper.data.local.ShopEntity
 import com.vishnu.stockeeper.data.local.StockEntity
 import com.vishnu.stockeeper.data.local.StockItemDao
-import com.vishnu.stockeeper.data.toSelectedStockItem
-import com.vishnu.stockeeper.data.toStockItemSelection
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -22,7 +21,8 @@ class StockRepository @Inject constructor(
     private val itemNameDao: ItemNameDao,
     private val categoryDao: CategoryDao,
     private val shopDao: ShopDao,
-    private val selectedStockItemDao: SelectedStockItemDao,
+    private val selectedItemDao: SelectedItemDao,
+    private val selectedItemListDao: SelectedItemListDao,
 ) {
     suspend fun insert(stockEntity: StockEntity) {
         withContext(Dispatchers.IO) {
@@ -121,33 +121,27 @@ class StockRepository @Inject constructor(
     }
 
     //    selected items
-    suspend fun insertSelectedStockItemList(list: SelectedStockItemList) {
-        selectedStockItemDao.insertSelectedStockItemList(list)
+    suspend fun insertSelectedItemList(list: SelectedItemList) {
+        selectedItemListDao.insert(list)
     }
 
-    suspend fun insertOrUpdateSelectedStockItems(items: List<StockItemSelection>, listId: String) {
-        val selectedStockItems = items.map { it.toSelectedStockItem(listId) }
-        selectedStockItemDao.insertSelectedStockItems(selectedStockItems)
+    suspend fun insertOrUpdateSelectedItems(items: List<SelectedItem>) {
+        selectedItemDao.insertAll(items)
     }
 
-    suspend fun deleteSelectedStockItemsByListId(listId: String) {
-        selectedStockItemDao.deleteSelectedStockItemsByListId(listId)
+    suspend fun deleteSelectedItemsByListId(listId: String) {
+        selectedItemListDao.deleteSelectedItemsByListId(listId)
     }
 
-    suspend fun deleteSelectedStockItemList(listId: String) {
-        selectedStockItemDao.deleteSelectedStockItemList(listId)
+    suspend fun deleteSelectedItemList(listId: String) {
+        selectedItemListDao.deleteSelectedItemList(listId)
     }
 
-    suspend fun getSelectedStockItemsByListId(listId: String): List<StockItemSelection> {
-        return selectedStockItemDao.getSelectedStockItemsByListId(listId)
-            .map { it.toStockItemSelection() }
+    suspend fun getAllSelectedItemLists(): List<SelectedItemList> {
+        return selectedItemListDao.getAll()
     }
 
-    suspend fun getAllSelectedStockItemLists(): List<SelectedStockItemList> {
-        return selectedStockItemDao.getAllSelectedStockItemLists()
-    }
-
-    suspend fun getSelectedStockItemListById(listId: String): SelectedStockItemList? {
-        return selectedStockItemDao.getSelectedStockItemListById(listId)
+    suspend fun getItemsForList(listId: String): List<SelectedItem> {
+        return selectedItemDao.getItemsForList(listId)
     }
 }

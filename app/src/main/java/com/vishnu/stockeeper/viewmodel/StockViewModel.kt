@@ -1,14 +1,16 @@
 package com.vishnu.stockeeper.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.Firebase
 import com.google.firebase.auth.auth
 import com.google.gson.Gson
+import com.vishnu.stockeeper.data.SelectedItemDto
 import com.vishnu.stockeeper.data.StockDto
-import com.vishnu.stockeeper.data.StockItemSelection
 import com.vishnu.stockeeper.data.local.CategoryEntity
-import com.vishnu.stockeeper.data.local.SelectedStockItemList
+import com.vishnu.stockeeper.data.local.SelectedItem
+import com.vishnu.stockeeper.data.local.SelectedItemList
 import com.vishnu.stockeeper.data.local.ShopEntity
 import com.vishnu.stockeeper.data.local.StockEntity
 import com.vishnu.stockeeper.data.toStockEntity
@@ -37,8 +39,8 @@ class StockViewModel @Inject constructor(
     private val _filteredItems = MutableStateFlow<List<StockEntity>>(emptyList())
     val filteredItems: Flow<List<StockEntity>> = _filteredItems
 
-    private val _stockItemsNames = MutableStateFlow<List<StockItemSelection>>(emptyList())
-    val stockItemsNames: Flow<List<StockItemSelection>> get() = _stockItemsNames.asStateFlow()
+    private val _stockItemsNames = MutableStateFlow<List<SelectedItemDto>>(emptyList())
+    val stockItemsNames: Flow<List<SelectedItemDto>> get() = _stockItemsNames.asStateFlow()
 
     private val _stockCategories = MutableStateFlow<List<CategoryEntity>>(emptyList())
     val stockCategories: Flow<List<CategoryEntity>> get() = _stockCategories.asStateFlow()
@@ -46,14 +48,17 @@ class StockViewModel @Inject constructor(
     private val _stockShops = MutableStateFlow<List<ShopEntity>>(emptyList())
     val stockShops: Flow<List<ShopEntity>> get() = _stockShops.asStateFlow()
 
-    private val _selectedItems = MutableStateFlow<Map<String, StockItemSelection>>(emptyMap())
-    val selectedItems: Flow<Map<String, StockItemSelection>> = _selectedItems.asStateFlow()
+    private val _selectedItems = MutableStateFlow<Map<String, SelectedItemDto>>(emptyMap())
+    val selectedItems: Flow<Map<String, SelectedItemDto>> = _selectedItems.asStateFlow()
 
-    private val _selectedItemLists = MutableStateFlow<List<SelectedStockItemList>>(emptyList())
-    val selectedItemLists: Flow<List<SelectedStockItemList>> get() = _selectedItemLists.asStateFlow()
+    private val _selectedItemLists = MutableStateFlow<List<SelectedItemList>>(emptyList())
+    val selectedItemLists: Flow<List<SelectedItemList>> get() = _selectedItemLists
+
+    private val _selectedItemsForList = MutableStateFlow<List<SelectedItem>>(emptyList())
+    val selectedItemsForList: Flow<List<SelectedItem>> get() = _selectedItemsForList
 
 
-    private lateinit var itemNames: List<StockItemSelection>
+    private lateinit var itemNames: List<SelectedItemDto>
 
     init {
         stockManager.observeStockItems { itemsFromFirebase ->
@@ -149,7 +154,12 @@ class StockViewModel @Inject constructor(
             val itemNames = stockManager.getAllItemNames()
             val selectedItemIds = _selectedItems.value.keys
             _stockItemsNames.value = itemNames.map {
-                StockItemSelection(id = it, name = it, isSelected = selectedItemIds.contains(it))
+                SelectedItemDto(
+                    itemId = it,
+                    itemName = it,
+                    listId = it,
+                    isSelected = selectedItemIds.contains(it)
+                )
             }
         }
     }
@@ -158,7 +168,7 @@ class StockViewModel @Inject constructor(
         _selectedItems.update { currentItems ->
             if (isSelected) {
                 currentItems + (id to (currentItems[id]?.copy(isSelected = true)
-                    ?: StockItemSelection(id, "", isSelected = true)))
+                    ?: SelectedItemDto(id, itemName = "", listId = id, isSelected = true)))
             } else {
                 currentItems - id
             }
@@ -173,6 +183,7 @@ class StockViewModel @Inject constructor(
         }
     }
 
+
     fun getSelectedItemsAsJson(): String {
         val selectedItemsList = _selectedItems.value.values.toList()
         return Gson().toJson(selectedItemsList)
@@ -184,7 +195,12 @@ class StockViewModel @Inject constructor(
             val itemNames = stockManager.getItemNamesByCategory(category.categoryName)
             val selectedItemIds = _selectedItems.value.keys
             _stockItemsNames.value = itemNames.map {
-                StockItemSelection(id = it, name = it, isSelected = selectedItemIds.contains(it))
+                SelectedItemDto(
+                    itemId = it,
+                    itemName = it,
+                    listId = it,
+                    isSelected = selectedItemIds.contains(it)
+                )
             }
         }
     }
@@ -194,45 +210,55 @@ class StockViewModel @Inject constructor(
             val itemNames = stockManager.getItemNamesByShop(shop.shopName)
             val selectedItemIds = _selectedItems.value.keys
             _stockItemsNames.value = itemNames.map {
-                StockItemSelection(id = it, name = it, isSelected = selectedItemIds.contains(it))
+                SelectedItemDto(
+                    itemId = it,
+                    itemName = it,
+                    listId = it,
+                    isSelected = selectedItemIds.contains(it)
+                )
             }
         }
     }
 
     // Get all selected stock items from the database------------------------------------------
-    fun saveSelectedStockItems(items: List<StockItemSelection>, listId: String) {
+    fun saveSelectedItemList(list: SelectedItemList) {
         viewModelScope.launch {
-            stockManager.insertOrUpdateSelectedStockItems(items, listId)
-            // Update the in-memory state
-            val updatedItems = _selectedItems.value.toMutableMap()
-            items.forEach { updatedItems[it.id] = it }
-            _selectedItems.value = updatedItems
+            stockManager.insertSelectedItemList(list)
+            loadAllSelectedItemLists()
         }
     }
 
-    fun deleteSelectedStockItemsByListId(listId: String) {
+    fun saveSelectedItems(items: List<SelectedItem>) {
         viewModelScope.launch {
-            stockManager.deleteSelectedStockItemsByListId(listId)
+            stockManager.insertOrUpdateSelectedItems(items)
         }
     }
 
-    fun saveSelectedStockItemList(list: SelectedStockItemList) {
+    fun loadAllSelectedItemLists() {
         viewModelScope.launch {
-            stockManager.insertSelectedStockItemList(list)
-            loadAllSelectedStockItemLists() // Reload lists
+            _selectedItemLists.value = stockManager.getAllSelectedItemLists()
+            Log.i(TAG, "loadAllSelectedItemLists")
         }
     }
 
-    fun deleteSelectedStockItemList(listId: String) {
+    fun loadItemsForList(listId: String) {
         viewModelScope.launch {
-            stockManager.deleteSelectedStockItemList(listId)
-            loadAllSelectedStockItemLists() // Reload lists
+            _selectedItemsForList.value = stockManager.getItemsForList(listId)
+            Log.i(TAG, "loadItemsForList")
         }
     }
 
-    fun loadAllSelectedStockItemLists() {
+    fun deleteSelectedItemsByListId(listId: String) {
         viewModelScope.launch {
-            _selectedItemLists.value = stockManager.getAllSelectedStockItemLists()
+            stockManager.deleteSelectedItemsByListId(listId)
+            loadAllSelectedItemLists()
+        }
+    }
+
+    fun deleteSelectedItemList(listId: String) {
+        viewModelScope.launch {
+            stockManager.deleteSelectedItemList(listId)
+            loadAllSelectedItemLists()
         }
     }
 }

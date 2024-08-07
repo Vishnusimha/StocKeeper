@@ -1,7 +1,6 @@
 package com.vishnu.stockeeper.presentation
 
 import android.util.Log
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,24 +38,27 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.vishnu.stockeeper.data.StockItemSelection
+import com.vishnu.stockeeper.data.SelectedItemDto
 import com.vishnu.stockeeper.data.local.CategoryEntity
-import com.vishnu.stockeeper.data.local.SelectedStockItemList
+import com.vishnu.stockeeper.data.local.SelectedItem
+import com.vishnu.stockeeper.data.local.SelectedItemList
 import com.vishnu.stockeeper.data.local.ShopEntity
+import com.vishnu.stockeeper.data.toSelectedItemDto
 import com.vishnu.stockeeper.viewmodel.StockViewModel
 import java.util.UUID
 
 @Composable
 fun PlanScreen(stockViewModel: StockViewModel) {
-
     val stockItemsNames by stockViewModel.stockItemsNames.collectAsState(emptyList())
     val stockCategories by stockViewModel.stockCategories.collectAsState(emptyList())
     val stockShops by stockViewModel.stockShops.collectAsState(emptyList())
-    val selectedItems by stockViewModel.selectedItems.collectAsState(emptyMap())
+    val selectedItemLists by stockViewModel.selectedItemLists.collectAsState(emptyList())
+    val selectedItemsForList by stockViewModel.selectedItemsForList.collectAsState(emptyList())
+
+    val selectedItems = remember { mutableStateOf<Map<String, SelectedItem>>(emptyMap()) }
 
     var isAllChecked by remember { mutableStateOf(false) }
     var isCategoryChecked by remember { mutableStateOf(false) }
@@ -206,29 +208,6 @@ fun PlanScreen(stockViewModel: StockViewModel) {
                 }
             }
 
-//            if (stockItemsNames.isEmpty()) {
-//                Text(text = "No stock items available")
-//            } else {
-//                LazyColumn(
-//                    modifier = Modifier
-//                        .weight(1f)
-//                        .fillMaxWidth()
-//                        .padding(8.dp)
-//                        .padding(bottom = 16.dp)
-//                ) {
-//                    items(stockItemsNames) { item ->
-//                        StockItemRow(
-//                            item = item,
-//                            onSelectionChange = { isSelected ->
-//                                stockViewModel.updateSelection(item.id, isSelected)
-//                            },
-//                            onQuantityChange = { quantity ->
-//                                stockViewModel.updateQuantity(item.id, quantity)
-//                            }
-//                        )
-//                    }
-//                }
-
             if (stockItemsNames.isEmpty()) {
                 Text(text = "No stock items available")
             } else {
@@ -240,55 +219,137 @@ fun PlanScreen(stockViewModel: StockViewModel) {
                         .padding(bottom = 16.dp)
                 ) {
                     items(stockItemsNames) { item ->
-                        val selectedItem = selectedItems[item.id]
+                        val selectedItem = selectedItems.value[item.itemId] ?: SelectedItem(
+                            itemId = item.itemId,
+                            listId = item.listId,
+                            itemName = item.itemName,
+                            isSelected = false,
+                            quantity = 0
+                        )
+
                         StockItemRow(
-                            item = item.copy(
-                                isSelected = selectedItem?.isSelected ?: false,
-                                quantity = selectedItem?.quantity ?: 0
-                            ),
+                            item = selectedItem.toSelectedItemDto(),
                             onSelectionChange = { isSelected ->
-                                stockViewModel.updateSelection(item.id, isSelected)
+                                val updatedItem = selectedItem.copy(isSelected = isSelected)
+                                selectedItems.value = selectedItems.value.toMutableMap().apply {
+                                    put(updatedItem.itemId, updatedItem)
+                                }
+                                stockViewModel.updateSelection(updatedItem.itemId, isSelected)
                             },
                             onQuantityChange = { quantity ->
-                                stockViewModel.updateQuantity(item.id, quantity)
+                                val updatedItem = selectedItem.copy(quantity = quantity)
+                                selectedItems.value = selectedItems.value.toMutableMap().apply {
+                                    put(updatedItem.itemId, updatedItem)
+                                }
+                                stockViewModel.updateQuantity(updatedItem.itemId, quantity)
                             }
                         )
                     }
                 }
 
                 Button(onClick = {
-
-                    val selectedItemsList = selectedItems.values.toList()
+                    val selectedItemsList = selectedItems.value.values.toList()
                     val listId = UUID.randomUUID().toString() // Generate a unique ID for the list
-                    val listName = "Selected Items" // You can customize the list name
-                    stockViewModel.saveSelectedStockItemList(SelectedStockItemList(listId, listName))
-                    stockViewModel.saveSelectedStockItems(selectedItemsList, listId)
+                    val listName = "Selected Items" // Customize the list name
+                    val itemList = selectedItemsList.map {
+                        it.copy(listId = listId) // Update listId for each item
+                    }
+                    stockViewModel.saveSelectedItemList(SelectedItemList(listId, listName))
+                    stockViewModel.saveSelectedItems(itemList)
 
+                    Log.i("PlanScreen", stockViewModel.getSelectedItemsAsJson())
+                    Log.i(
+                        "PlanScreen selectedItemLists 1, 2",
+                        "${
+                            selectedItemsForList.stream()
+                                .forEach { i -> println(i.itemName).toString() }
+                        },  ${
+                            selectedItemsForList.stream()
+                                .forEach { i -> println(i.itemId).toString() }
+                        }"
+                    )
                     val json = stockViewModel.getSelectedItemsAsJson()
                     Log.i("PlanScreen", json)
-                    // Handle the export logic here, for example, save to file or share
+                    Log.i(
+                        "PlanScreen selectedItemLists",
+                        selectedItemLists.joinToString { it.listName }
+                    )
                 }) {
                     Text(text = "Export as JSON")
                 }
+
+
+                Button(onClick = {
+                    stockViewModel.loadAllSelectedItemLists()
+                }) {
+                    Text(text = "Load All")
+                }
+                // Display saved plans
+                Text(
+                    text = "Saved Plans",
+                    style = MaterialTheme.typography.headlineMedium
+                )
+
+//                LazyColumn(
+//                    modifier = Modifier
+//                        .fillMaxWidth()
+//                        .padding(8.dp)
+//                ) {
+//                    items(selectedItemLists) { list ->
+//                        ListItem(
+//                            modifier = Modifier.clickable {
+//                                stockViewModel.loadItemsForList(list.listId)
+//                                Log.i("Hello",
+//                                    selectedItemsForList.stream()
+//                                        .forEach { i -> println("${i.itemName}, ${i.quantity}") }
+//                                        .toString()
+//                                )
+//                            },
+//                            headlineContent = { Text(list.listName) },
+//                            supportingContent = { Text("Items: ${list.listId}") }
+//                        )
+//                    }
+//                }
             }
         }
     }
 }
 
+
 @Composable
 fun StockItemRow(
-    item: StockItemSelection,
+    item: SelectedItemDto,
     onSelectionChange: (Boolean) -> Unit,
     onQuantityChange: (Int) -> Unit
 ) {
-    // Use derived state to reflect item.isSelected and item.quantity
+    // Local state to handle the UI state
     var isSelected by remember { mutableStateOf(item.isSelected) }
     var quantity by remember { mutableStateOf(item.quantity.toString()) }
 
-    // Update the local state when item properties change
-    LaunchedEffect(item.isSelected, item.quantity) {
+    // Update local state when the item prop changes
+    LaunchedEffect(item) {
         isSelected = item.isSelected
         quantity = item.quantity.toString()
+    }
+
+    // Handle selection change
+    fun handleSelectionChange(newSelection: Boolean) {
+        isSelected = newSelection
+        onSelectionChange(newSelection)
+        // Reset quantity to 0 when deselected
+        if (!newSelection) {
+            quantity = "0"
+            onQuantityChange(0)
+        }
+    }
+
+    // Handle quantity change
+    fun handleQuantityChange(newQuantity: String) {
+        val quantityInt = newQuantity.toIntOrNull() ?: 0
+        quantity = newQuantity
+        if (isSelected) {
+            onQuantityChange(quantityInt)
+        }
     }
 
     Row(
@@ -299,73 +360,51 @@ fun StockItemRow(
     ) {
         Checkbox(
             checked = isSelected,
-            onCheckedChange = {
-                isSelected = it
-                onSelectionChange(it)
-                // Reset quantity to 0 if not selected
-                if (!it) {
-                    quantity = "0"
-                    onQuantityChange(0)
-                }
-            }
+            onCheckedChange = ::handleSelectionChange
         )
         Text(
-            text = item.name,
+            text = item.itemName,
             modifier = Modifier.weight(1f)
         )
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center,
             modifier = Modifier
-                .wrapContentSize() // Allows the field to grow based on its content
+                .wrapContentSize()
                 .padding(horizontal = 4.dp)
         ) {
             IconButton(
                 onClick = {
                     val newQuantity = (quantity.toIntOrNull() ?: 0) - 1
                     if (newQuantity >= 0) {
-                        quantity = newQuantity.toString()
-                        onQuantityChange(newQuantity)
+                        handleQuantityChange(newQuantity.toString())
                     }
-                }
+                },
+                enabled = isSelected // Enable button only if item is selected
             ) {
                 Icon(
                     Icons.Default.Clear,
                     contentDescription = "Decrease Quantity"
                 )
             }
-            Box(
+            OutlinedTextField(
+                value = quantity,
+                onValueChange = ::handleQuantityChange,
+                singleLine = true,
+                enabled = isSelected, // Enable text field only if item is selected
                 modifier = Modifier
                     .wrapContentSize()
-                    .padding(horizontal = 4.dp)
-                    .background(Color.Transparent) // Transparent background to ensure proper layout
-            ) {
-                OutlinedTextField(
-                    value = quantity, // Use String for display
-                    onValueChange = { newValue ->
-                        val newQuantity = newValue.toIntOrNull() ?: 0
-                        if (isSelected) {
-                            quantity = newValue
-                            onQuantityChange(newQuantity)
-                        }
-                    },
-                    singleLine = true,
-                    modifier = Modifier
-                        .wrapContentSize()
-                        .widthIn(min = 40.dp, max = 60.dp) // Minimum and maximum width constraints
-                        .padding(horizontal = 4.dp),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center)
-                )
-            }
+                    .widthIn(min = 40.dp, max = 60.dp)
+                    .padding(horizontal = 4.dp),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                textStyle = LocalTextStyle.current.copy(textAlign = TextAlign.Center)
+            )
             IconButton(
                 onClick = {
                     val newQuantity = (quantity.toIntOrNull() ?: 0) + 1
-                    if (isSelected) {
-                        quantity = newQuantity.toString()
-                        onQuantityChange(newQuantity)
-                    }
-                }
+                    handleQuantityChange(newQuantity.toString())
+                },
+                enabled = isSelected // Enable button only if item is selected
             ) {
                 Icon(
                     Icons.Default.Add,
