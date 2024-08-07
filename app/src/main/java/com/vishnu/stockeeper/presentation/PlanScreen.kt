@@ -266,40 +266,6 @@ fun PlanScreen(stockViewModel: StockViewModel) {
                 }) {
                     Text(text = "Export as JSON")
                 }
-
-
-//                Button(onClick = {
-//                    stockViewModel.loadAllSelectedItemLists()
-//                }) {
-//                    Text(text = "Load All")
-//                }
-//                // Display saved plans
-//                Text(
-//                    text = "Saved Plans",
-//                    style = MaterialTheme.typography.headlineMedium
-//                )
-
-//                LazyColumn(
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .padding(8.dp)
-//                ) {
-//                    items(selectedItemLists) { list ->
-//                        ListItem(
-//                            modifier = Modifier.clickable {
-//                                stockViewModel.loadItemsForList(list.listId)
-//                                Log.i("Hello",
-//                                    allSelectedItems.stream()
-//                                        .forEach { i -> println("${i.itemName}, ${i.quantity}") }
-//                                        .toString()
-//                                )
-//                            },
-//                            headlineContent = { Text(list.listName) },
-//                            supportingContent = { Text("Items: ${list.listId}") }
-//                        )
-//                    }
-//
-
             }
         }
     }
