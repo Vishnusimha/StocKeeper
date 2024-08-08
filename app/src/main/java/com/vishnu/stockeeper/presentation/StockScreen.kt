@@ -54,7 +54,7 @@ fun StockScreen(
     var isSearchVisible by remember { mutableStateOf(false) }
 
     val coroutineScope = rememberCoroutineScope()
-    val items by stockViewModel.stockItems.collectAsState(emptyList())
+    val products by stockViewModel.stockItems.collectAsState(emptyList())
     val isRefreshing by stockViewModel.isRefreshing.collectAsState(false)
     val context = LocalContext.current
     var isAllSelected by remember { mutableStateOf(false) }
@@ -133,7 +133,9 @@ fun StockScreen(
                                     quantity = 10,
                                     expirationDate = dateToLong(Date()), // Convert Date to Long
                                     purchaseDate = dateToLong(Date()),
-                                    updatedBy = "user123"
+                                    updatedBy = "user123",
+                                    category = "Food",
+                                    shop = "More"
                                 )
                             )
                         },
@@ -177,7 +179,7 @@ fun StockScreen(
                                 isNameSelected = false
                                 stockViewModel.loadItemsSortedByQuantity()
                             },
-                            label = { Text("Quantity") },
+                            label = { Text("Shop") },
                             leadingIcon = {
                                 if (isQuantitySelected) {
                                     Icon(
@@ -197,7 +199,7 @@ fun StockScreen(
                                 isNameSelected = false
                                 stockViewModel.loadItemsSortedByExpirationDate()
                             },
-                            label = { Text("Expiry") },
+                            label = { Text("Category") },
                             leadingIcon = {
                                 if (isExpirySelected) {
                                     Icon(
@@ -229,7 +231,7 @@ fun StockScreen(
                         )
                     }
 
-                    if (items.isEmpty()) {
+                    if (products.isEmpty()) {
                         Text(text = "No items available")
                     } else {
                         LazyColumn(
@@ -239,8 +241,8 @@ fun StockScreen(
                                 .padding(8.dp)
                                 .padding(bottom = 16.dp)
                         ) {
-                            items(items) { item ->
-                                StockEntityCard(item)
+                            items(products) { product ->
+                                StockEntityCard(product)
                             }
                         }
                     }

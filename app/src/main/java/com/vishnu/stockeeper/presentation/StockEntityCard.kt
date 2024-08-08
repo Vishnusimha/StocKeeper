@@ -45,6 +45,14 @@ fun StockEntityCard(stockEntity: StockEntity) {
                 style = MaterialTheme.typography.bodySmall,
             )
             Text(
+                text = "Category: ${stockEntity.category}",
+                style = MaterialTheme.typography.bodySmall,
+            )
+            Text(
+                text = "Shop: ${stockEntity.shop}",
+                style = MaterialTheme.typography.bodySmall,
+            )
+            Text(
                 text = "Updated by: ${stockEntity.updatedBy}",
                 style = MaterialTheme.typography.labelMedium,
                 fontStyle = FontStyle.Italic,
@@ -70,7 +78,9 @@ fun PreviewStockEntityCard() {
             quantity = 20,
             expirationDate = System.currentTimeMillis() + 86400000 * 10, // 10 days from now
             purchaseDate = System.currentTimeMillis() - 86400000 * 5, // 5 days ago
-            updatedBy = "user123"
+            updatedBy = "user123",
+            shop = "More",
+            category = "Food"
         )
     )
 }

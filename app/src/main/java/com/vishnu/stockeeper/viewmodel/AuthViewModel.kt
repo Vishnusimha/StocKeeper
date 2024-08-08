@@ -93,7 +93,7 @@ class AuthViewModel @Inject constructor(private val stockManager: StockManager) 
 
     fun signOut() {
         viewModelScope.launch {
-            stockManager.deleteAllItemsFromLocal()
+            stockManager.deleteAllStockProductsFromLocal()
             _isUserPresent.value = false
             currentUser = null
             needToInitiate = isUserPresent.value

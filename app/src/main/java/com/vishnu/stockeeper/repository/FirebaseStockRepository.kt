@@ -15,51 +15,51 @@ class FirebaseStockRepository(
         FirebaseDatabase.getInstance().reference.child("user_stocks").child(userKey)
 
 
-    suspend fun getAllItemsFromFirebase(): List<StockDto> {
+    suspend fun getAllStockProductsFromFirebase(): List<StockDto> {
         return try {
             val snapshot = database.get().await()
-            val items = mutableListOf<StockDto>()
-            for (itemSnapshot in snapshot.children) {
-                val item = itemSnapshot.getValue(StockDto::class.java)
-                if (item != null) {
-                    items.add(item)
+            val stockProducts = mutableListOf<StockDto>()
+            for (productSnapshot in snapshot.children) {
+                val product = productSnapshot.getValue(StockDto::class.java)
+                if (product != null) {
+                    stockProducts.add(product)
                 }
             }
-            items
+            stockProducts
         } catch (e: Exception) {
             e.printStackTrace()
             emptyList()
         }
     }
 
-    fun addItem(stockDto: StockDto) {
+    fun addProduct(stockDto: StockDto) {
         val key = database.push().key ?: return
         database.child(key).setValue(stockDto)
     }
 
-    fun updateItem(stockDto: StockDto) {
+    fun updateProduct(stockDto: StockDto) {
         database.child(stockDto.id.toString()).setValue(stockDto)
     }
 
-    fun deleteItem(itemId: Int) {
-        database.child(itemId.toString()).removeValue()
+    fun deleteProduct(productId: Int) {
+        database.child(productId.toString()).removeValue()
     }
 
-    fun deleteAllItems() {
+    fun deleteAllProducts() {
         database.removeValue()
     }
 
-    fun observeStockItems(onDataChange: (List<StockDto>) -> Unit) {
+    fun observeStockProducts(onDataChange: (List<StockDto>) -> Unit) {
         database.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val items = mutableListOf<StockDto>()
-                for (itemSnapshot in snapshot.children) {
-                    val item = itemSnapshot.getValue(StockDto::class.java)
-                    if (item != null) {
-                        items.add(item)
+                val stockProducts = mutableListOf<StockDto>()
+                for (productSnapshot in snapshot.children) {
+                    val product = productSnapshot.getValue(StockDto::class.java)
+                    if (product != null) {
+                        stockProducts.add(product)
                     }
                 }
-                onDataChange(items)
+                onDataChange(stockProducts)
             }
 
             override fun onCancelled(error: DatabaseError) {
