@@ -119,6 +119,9 @@ class LandingActivity : ComponentActivity() {
             composable(Screen.PlanListsScreen.route) {
                 PlanListsScreen(stockViewModel, navController)
             }
+            composable(Screen.StockInputScreen.route) {
+                StockInputScreen(stockViewModel, navController)
+            }
         }
     }
 

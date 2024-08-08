@@ -13,6 +13,7 @@ sealed class Screen(val route: String) {
     object NotificationScreen : Screen("Notifications")
     object PlanScreen : Screen("Plan")
     object PlanListsScreen : Screen("Plans")
+    object StockInputScreen : Screen("StockInput")
 }
 
 val screenIcons = mapOf(

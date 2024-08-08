@@ -13,12 +13,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -29,6 +29,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.ImeAction
@@ -36,12 +37,9 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.SwipeRefreshState
-import com.vishnu.stockeeper.data.StockDto
-import com.vishnu.stockeeper.data.dateToLong
 import com.vishnu.stockeeper.viewmodel.AuthViewModel
 import com.vishnu.stockeeper.viewmodel.StockViewModel
 import kotlinx.coroutines.launch
-import java.util.Date
 
 @Composable
 fun StockScreen(
@@ -49,7 +47,6 @@ fun StockScreen(
     authViewModel: AuthViewModel,
     navController: NavHostController
 ) {
-    // Make searchQuery and searchIconClicked mutable
     var searchQuery by remember { mutableStateOf("") }
     var isSearchVisible by remember { mutableStateOf(false) }
 
@@ -71,11 +68,25 @@ fun StockScreen(
 
     Scaffold(
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { isSearchVisible = !isSearchVisible }, content = {
+            Column(
+                horizontalAlignment = Alignment.End
+            ) {
+                FloatingActionButton(
+                    onClick = { navController.navigate(Screen.StockInputScreen.route) },
+                    modifier = Modifier.padding(bottom = 16.dp)
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Add")
+                }
+
+
+                FloatingActionButton(
+                    onClick = {
+                        isSearchVisible = !isSearchVisible
+                    }
+                ) {
                     Icon(Icons.Default.Search, contentDescription = "Filter")
                 }
-            )
+            }
         }
     ) { innerPadding ->
         SwipeRefresh(
@@ -90,8 +101,8 @@ fun StockScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(
-                        bottom = 0.dp, top = if (innerPadding.calculateTopPadding() < 16.dp) {
-                            16.dp
+                        bottom = 0.dp, top = if (innerPadding.calculateTopPadding() > 8.dp) {
+                            8.dp
                         } else {
                             innerPadding.calculateTopPadding()
                         }
@@ -99,8 +110,7 @@ fun StockScreen(
             ) {
                 Column(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
+                        .fillMaxSize(),
                     verticalArrangement = Arrangement.Top
                 ) {
                     if (isSearchVisible) {
@@ -122,27 +132,6 @@ fun StockScreen(
                         )
                     } else {
                         searchQuery = ""
-                    }
-
-                    OutlinedButton(
-                        onClick = {
-                            stockViewModel.addStockItem(
-                                StockDto(
-                                    id = 1,
-                                    name = "Item A",
-                                    quantity = 10,
-                                    expirationDate = dateToLong(Date()), // Convert Date to Long
-                                    purchaseDate = dateToLong(Date()),
-                                    updatedBy = "user123",
-                                    category = "Food",
-                                    shop = "More"
-                                )
-                            )
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                    ) {
-                        Text(text = "Add Data")
                     }
 
                     Row(
@@ -239,7 +228,6 @@ fun StockScreen(
                                 .weight(1f)
                                 .fillMaxWidth()
                                 .padding(8.dp)
-                                .padding(bottom = 16.dp)
                         ) {
                             items(products) { product ->
                                 StockEntityCard(product)
