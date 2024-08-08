@@ -65,7 +65,7 @@ class StockViewModel @Inject constructor(
     private lateinit var itemNames: List<SelectedProductDto>
 
     init {
-        stockManager.observeStockItems { itemsFromFirebase ->
+        stockManager.observeStockProductsFromRemote { itemsFromFirebase ->
             viewModelScope.launch {
                 reLoadFromRemote(itemsFromFirebase)
             }
@@ -82,53 +82,53 @@ class StockViewModel @Inject constructor(
     }
 
     private suspend fun reLoadFromRemote(itemsFromFirebase: List<StockDto>) {
-        stockManager.deleteAllItemsFromLocal()
+        stockManager.deleteAllStockProductsFromLocal()
         val itemsEntity = itemsFromFirebase.map { it.toStockEntity() }
-        stockManager.saveAllItemsIntoLocal(itemsEntity)
-        _stockItems.value = stockManager.getAllItemsFromLocal()  // Update the local state
+        stockManager.saveAllStockProductsIntoLocal(itemsEntity)
+        _stockItems.value = stockManager.getAllStockProductsFromLocal()  // Update the local state
     }
 
     fun refresh() {
         viewModelScope.launch {
             _isRefreshing.value = true
-            reLoadFromRemote(stockManager.getAllItemsFromRemote())
+            reLoadFromRemote(stockManager.getAllStockProductsFromRemote())
             _isRefreshing.value = false
         }
     }
 
     fun addStockItem(stockDto: StockDto) {
         viewModelScope.launch {
-            stockManager.addItem(stockDto)
+            stockManager.addProduct(stockDto)
         }
     }
 
     fun updateStockItem(stockDto: StockDto) {
         viewModelScope.launch {
-            stockManager.updateItem(stockDto)
+            stockManager.updateProduct(stockDto)
         }
     }
 
     fun deleteStockItem(itemId: Int) {
         viewModelScope.launch {
-            stockManager.deleteItem(itemId)
+            stockManager.deleteProduct(itemId)
         }
     }
 
     fun loadItemsSortedByName() {
         viewModelScope.launch {
-            _stockItems.value = stockManager.getAllItemsSortedByName()
+            _stockItems.value = stockManager.getAllProductsSortedByName()
         }
     }
 
     fun loadItemsSortedByExpirationDate() {
         viewModelScope.launch {
-            _stockItems.value = stockManager.getAllItemsSortedByExpirationDate()
+            _stockItems.value = stockManager.getAllProductsSortedByExpirationDate()
         }
     }
 
     fun loadItemsSortedByQuantity() {
         viewModelScope.launch {
-            _stockItems.value = stockManager.getAllItemsSortedByQuantity()
+            _stockItems.value = stockManager.getAllProductsSortedByQuantity()
         }
     }
 
@@ -147,7 +147,7 @@ class StockViewModel @Inject constructor(
     fun searchItems(query: String) {
         viewModelScope.launch {
             _filteredItems.value =
-                stockManager.getAllItemsFromLocal()
+                stockManager.getAllStockProductsFromLocal()
                     .filter { it.name.contains(query, ignoreCase = true) }
             _stockItems.value = _filteredItems.value
         }
@@ -159,8 +159,8 @@ class StockViewModel @Inject constructor(
             val selectedItemIds = _selectedProductsToMakePlan.value.keys
             _productNames.value = itemNames.map {
                 SelectedProductDto(
-                    itemId = it.name,
-                    itemName = it.name,
+                    productId = it.name,
+                    productName = it.name,
                     listId = it.toString(),
                     isSelected = selectedItemIds.contains(it.name),
                     shopName = it.shopName,
@@ -176,7 +176,7 @@ class StockViewModel @Inject constructor(
                 currentItems + (id to (currentItems[id]?.copy(isSelected = true)
                     ?: SelectedProductDto(
                         id,
-                        itemName = "",
+                        productName = "",
                         listId = id,
                         isSelected = true,
                         shopName = "",
@@ -207,8 +207,8 @@ class StockViewModel @Inject constructor(
             val selectedItemIds = _selectedProductsToMakePlan.value.keys
             _productNames.value = itemNames.map {
                 SelectedProductDto(
-                    itemId = it,
-                    itemName = it,
+                    productId = it,
+                    productName = it,
                     listId = it,
                     isSelected = selectedItemIds.contains(it),
                     shopName = it,
@@ -224,8 +224,8 @@ class StockViewModel @Inject constructor(
             val selectedItemIds = _selectedProductsToMakePlan.value.keys
             _productNames.value = itemNames.map {
                 SelectedProductDto(
-                    itemId = it,
-                    itemName = it,
+                    productId = it,
+                    productName = it,
                     listId = it,
                     isSelected = selectedItemIds.contains(it),
                     shopName = shop,

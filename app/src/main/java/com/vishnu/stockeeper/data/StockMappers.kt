@@ -40,9 +40,9 @@ fun dateToLong(date: Date): Long {
 
 fun SelectedProductDto.toSelectedItem(): SelectedProductEntity {
     return SelectedProductEntity(
-        productId = this.itemId,
+        productId = this.productId,
         listId = this.listId,
-        itemName = this.itemName,
+        productName = this.productName,
         isSelected = this.isSelected,
         quantity = this.quantity,
         shopName = this.shopName,
@@ -52,9 +52,9 @@ fun SelectedProductDto.toSelectedItem(): SelectedProductEntity {
 
 fun SelectedProductEntity.toSelectedItemDto(): SelectedProductDto {
     return SelectedProductDto(
-        itemId = this.productId,
+        productId = this.productId,
         listId = this.listId,
-        itemName = this.itemName,
+        productName = this.productName,
         isSelected = this.isSelected,
         quantity = this.quantity,
         shopName = this.shopName,

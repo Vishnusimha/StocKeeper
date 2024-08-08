@@ -56,7 +56,7 @@ fun PlanScreen(stockViewModel: StockViewModel) {
     val productCategories by stockViewModel.productCategories.collectAsState(emptyList())
     val productShops by stockViewModel.productShops.collectAsState(emptyList())
 
-    val selectedItemsEntity =
+    val selectedProductsEntity =
         remember { mutableStateOf<Map<String, SelectedProductEntity>>(emptyMap()) }
 
     var isAllChecked by remember { mutableStateOf(false) }
@@ -217,33 +217,34 @@ fun PlanScreen(stockViewModel: StockViewModel) {
                         .padding(8.dp)
                         .padding(bottom = 16.dp)
                 ) {
-                    items(productNames) { item ->
+                    items(productNames) { product ->
                         val selectedProductEntity =
-                            selectedItemsEntity.value[item.itemId] ?: SelectedProductEntity(
-                                productId = item.itemId,
-                                listId = item.listId,
-                                itemName = item.itemName,
-                                isSelected = item.isSelected,
-                                quantity = item.quantity,
-                                shopName = item.shopName,
-                                categoryName = item.categoryName
-                            )
+                            selectedProductsEntity.value[product.productId]
+                                ?: SelectedProductEntity(
+                                    productId = product.productId,
+                                    listId = product.listId,
+                                    productName = product.productName,
+                                    isSelected = product.isSelected,
+                                    quantity = product.quantity,
+                                    shopName = product.shopName,
+                                    categoryName = product.categoryName
+                                )
 
                         StockItemRow(
-                            item = selectedProductEntity.toSelectedItemDto(),
+                            product = selectedProductEntity.toSelectedItemDto(),
                             onSelectionChange = { isSelected ->
                                 val updatedItem =
                                     selectedProductEntity.copy(isSelected = isSelected)
-                                selectedItemsEntity.value =
-                                    selectedItemsEntity.value.toMutableMap().apply {
+                                selectedProductsEntity.value =
+                                    selectedProductsEntity.value.toMutableMap().apply {
                                         put(updatedItem.productId, updatedItem)
                                     }
                                 stockViewModel.updateSelection(updatedItem.productId, isSelected)
                             },
                             onQuantityChange = { quantity ->
                                 val updatedItem = selectedProductEntity.copy(quantity = quantity)
-                                selectedItemsEntity.value =
-                                    selectedItemsEntity.value.toMutableMap().apply {
+                                selectedProductsEntity.value =
+                                    selectedProductsEntity.value.toMutableMap().apply {
                                         put(updatedItem.productId, updatedItem)
                                     }
                                 stockViewModel.updateQuantity(updatedItem.productId, quantity)
@@ -253,7 +254,7 @@ fun PlanScreen(stockViewModel: StockViewModel) {
                 }
 
                 Button(onClick = {
-                    val selectedProducts = selectedItemsEntity.value.values.toList()
+                    val selectedProducts = selectedProductsEntity.value.values.toList()
                     val listId = UUID.randomUUID().toString() // Generate a unique ID for the list
                     val listName = dateToLong(Date())// Customize the list name
                     val preparedPlan = selectedProducts.map {
@@ -280,18 +281,18 @@ fun PlanScreen(stockViewModel: StockViewModel) {
 
 @Composable
 fun StockItemRow(
-    item: SelectedProductDto,
+    product: SelectedProductDto,
     onSelectionChange: (Boolean) -> Unit,
     onQuantityChange: (Int) -> Unit
 ) {
     // Local state to handle the UI state
-    var isSelected by remember { mutableStateOf(item.isSelected) }
-    var quantity by remember { mutableStateOf(item.quantity.toString()) }
+    var isSelected by remember { mutableStateOf(product.isSelected) }
+    var quantity by remember { mutableStateOf(product.quantity.toString()) }
 
     // Update local state when the item prop changes
-    LaunchedEffect(item) {
-        isSelected = item.isSelected
-        quantity = item.quantity.toString()
+    LaunchedEffect(product) {
+        isSelected = product.isSelected
+        quantity = product.quantity.toString()
     }
 
     // Handle selection change
@@ -325,7 +326,7 @@ fun StockItemRow(
             onCheckedChange = ::handleSelectionChange
         )
         Text(
-            text = item.itemName,
+            text = product.productName,
             modifier = Modifier.weight(1f)
         )
         Row(

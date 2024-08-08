@@ -96,7 +96,7 @@ fun PlanListsScreen(stockViewModel: StockViewModel, navController: NavHostContro
                             // Log to verify the data being passed
                             Log.d(
                                 "PlanListsScreen",
-                                "List: ${selectedItemList.listName}, Items: ${items.joinToString { it.itemName }}"
+                                "List: ${selectedItemList.listName}, Items: ${items.joinToString { it.productName }}"
                             )
 
                             SelectedItemListCard(
@@ -124,7 +124,7 @@ fun SelectedItemListCard(
     itemsGroupedByShop.forEach { (shopName, items) ->
         Log.d(
             "SelectedItemListCard",
-            "Shop: $shopName, Items: ${items.joinToString { it.itemName }}"
+            "Shop: $shopName, Items: ${items.joinToString { it.productName }}"
         )
     }
 
@@ -149,7 +149,7 @@ fun SelectedItemListCard(
                 Text(text = "No items in this list")
             } else {
                 // Display grouped items
-                itemsGroupedByShop.forEach { (shopName, items) ->
+                itemsGroupedByShop.forEach { (shopName, products) ->
                     // Display shop name
                     Text(
                         text = shopName,
@@ -158,9 +158,9 @@ fun SelectedItemListCard(
                     )
 
                     // Display items under the shop
-                    items.forEach { item ->
+                    products.forEach { product ->
                         Text(
-                            text = "${item.itemName}: ${item.quantity}",
+                            text = "${product.productName}: ${product.quantity}",
                             style = MaterialTheme.typography.bodySmall,
                             modifier = Modifier.padding(vertical = 4.dp)
                         )

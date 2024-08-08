@@ -54,7 +54,7 @@ fun StockScreen(
     var isSearchVisible by remember { mutableStateOf(false) }
 
     val coroutineScope = rememberCoroutineScope()
-    val items by stockViewModel.stockItems.collectAsState(emptyList())
+    val products by stockViewModel.stockItems.collectAsState(emptyList())
     val isRefreshing by stockViewModel.isRefreshing.collectAsState(false)
     val context = LocalContext.current
     var isAllSelected by remember { mutableStateOf(false) }
@@ -231,7 +231,7 @@ fun StockScreen(
                         )
                     }
 
-                    if (items.isEmpty()) {
+                    if (products.isEmpty()) {
                         Text(text = "No items available")
                     } else {
                         LazyColumn(
@@ -241,8 +241,8 @@ fun StockScreen(
                                 .padding(8.dp)
                                 .padding(bottom = 16.dp)
                         ) {
-                            items(items) { item ->
-                                StockEntityCard(item)
+                            items(products) { product ->
+                                StockEntityCard(product)
                             }
                         }
                     }

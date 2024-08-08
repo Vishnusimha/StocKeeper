@@ -54,7 +54,7 @@ class StockRepository @Inject constructor(
     }
 
     // Get all items from the local database
-    suspend fun getAllItems(): List<StockEntity> {
+    suspend fun getAllStockProductsFromLocal(): List<StockEntity> {
         return withContext(Dispatchers.IO) {
             stockProductDao.getAllItems()
         }

@@ -18,7 +18,7 @@ import androidx.room.ForeignKey
 data class SelectedProductEntity(
     val productId: String,
     val listId: String,
-    val itemName: String,
+    val productName: String,
     val isSelected: Boolean,
     val quantity: Int,
     val shopName: String,

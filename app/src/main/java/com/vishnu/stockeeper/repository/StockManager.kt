@@ -19,62 +19,62 @@ class StockManager @Inject constructor(
         firebaseRepo = FirebaseStockRepository(userUid)
     }
 
-    suspend fun addItem(stockDto: StockDto) {
+    suspend fun addProduct(stockDto: StockDto) {
         localRepo.insert(stockDto.toStockEntity())
-        firebaseRepo?.addItem(stockDto)
+        firebaseRepo?.addProduct(stockDto)
     }
 
-    suspend fun updateItem(stockDto: StockDto) {
+    suspend fun updateProduct(stockDto: StockDto) {
         localRepo.update(stockDto.toStockEntity())
-        firebaseRepo?.updateItem(stockDto)
+        firebaseRepo?.updateProduct(stockDto)
     }
 
-    suspend fun deleteItem(itemId: Int) {
-        localRepo.delete(itemId)
-        firebaseRepo?.deleteItem(itemId)
+    suspend fun deleteProduct(productId: Int) {
+        localRepo.delete(productId)
+        firebaseRepo?.deleteProduct(productId)
     }
 
-    suspend fun getAllItemsFromLocal(): List<StockEntity> {
-        return localRepo.getAllItems()
+    suspend fun getAllStockProductsFromLocal(): List<StockEntity> {
+        return localRepo.getAllStockProductsFromLocal()
     }
 
-    suspend fun getAllItemsFromRemote(): List<StockDto> {
-        return firebaseRepo?.getAllItemsFromFirebase() ?: emptyList()
+    suspend fun getAllStockProductsFromRemote(): List<StockDto> {
+        return firebaseRepo?.getAllStockProductsFromFirebase() ?: emptyList()
     }
 
-    suspend fun saveAllItemsIntoLocal(items: List<StockEntity>) {
-        localRepo.insertAll(items)
+    suspend fun saveAllStockProductsIntoLocal(stockProducts: List<StockEntity>) {
+        localRepo.insertAll(stockProducts)
     }
 
-    suspend fun getItemById(itemId: Int): StockEntity? {
-        return localRepo.getProductById(itemId)
+    suspend fun getProductById(productId: Int): StockEntity? {
+        return localRepo.getProductById(productId)
     }
 
-    suspend fun deleteAllItemsFromLocal() {
+    suspend fun deleteAllStockProductsFromLocal() {
         localRepo.deleteAll()
     }
 
-    fun deleteAllItemsFromRemote() {
-        firebaseRepo?.deleteAllItems()
+    fun deleteAllStockProductsFromRemote() {
+        firebaseRepo?.deleteAllProducts()
     }
 
-    fun observeStockItems(onDataChange: (List<StockDto>) -> Unit) {
-        firebaseRepo?.observeStockItems(onDataChange)
+    fun observeStockProductsFromRemote(onDataChange: (List<StockDto>) -> Unit) {
+        firebaseRepo?.observeStockProducts(onDataChange)
     }
 
-    suspend fun getAllItemsSortedByName(): List<StockEntity> {
+    suspend fun getAllProductsSortedByName(): List<StockEntity> {
         return localRepo.getAllProductsSortedByName()
     }
 
-    suspend fun getAllItemsSortedByExpirationDate(): List<StockEntity> {
+    suspend fun getAllProductsSortedByExpirationDate(): List<StockEntity> {
         return localRepo.getAllProductsSortedByExpirationDate()
     }
 
-    suspend fun getAllItemsSortedByQuantity(): List<StockEntity> {
+    suspend fun getAllProductsSortedByQuantity(): List<StockEntity> {
         return localRepo.getAllProductsSortedByQuantity()
     }
 
-    suspend fun getAllStockItemNames(): List<String> {
+    suspend fun getAllStockProductNames(): List<String> {
         return localRepo.getAllStockProductNames()
     }
 
