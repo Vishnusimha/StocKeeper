@@ -30,6 +30,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.vishnu.stockeeper.presentation.ui.theme.StocKeeperTheme
 import com.vishnu.stockeeper.util.PreferenceHelper
+import com.vishnu.stockeeper.util.Util.staticCurrentUser
 import com.vishnu.stockeeper.viewmodel.AuthViewModel
 import com.vishnu.stockeeper.viewmodel.StockViewModel
 import dagger.hilt.android.AndroidEntryPoint
@@ -58,6 +59,7 @@ class LandingActivity : ComponentActivity() {
                     if (!isUserPresent) {
                         navController.navigate(Screen.AuthScreen.route)
                     } else {
+                        staticCurrentUser = authViewModel.getUserDetails().toString()
                         navController.navigate(Screen.StockScreen.route)
                     }
                 }

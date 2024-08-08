@@ -27,6 +27,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -40,6 +41,7 @@ import com.vishnu.stockeeper.util.Util.staticCurrentUser
 import com.vishnu.stockeeper.viewmodel.StockViewModel
 import java.time.Instant
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
@@ -50,14 +52,25 @@ fun StockInputScreen(
     navController: NavHostController
 ) {
     val context = LocalContext.current
+    val zoneId = ZoneId.systemDefault()
 
+    // Use LocalDateTime to get the exact current time
+    val now = LocalDateTime.now(zoneId)
+
+    // Default values with exact current time, ensuring only date part
+    val defaultPurchaseDateMillis =
+        now.toLocalDate().atStartOfDay(zoneId).toInstant().toEpochMilli()
+    val defaultExpirationDateMillis =
+        now.plusDays(10).toLocalDate().atStartOfDay(zoneId).toInstant().toEpochMilli()
+
+    // State variables with default values
     var name by remember { mutableStateOf("") }
-    var quantity by remember { mutableStateOf("1") } // Default quantity is 1
-    var expirationDate by remember { mutableStateOf<Long?>(null) }
-    var purchaseDate by remember { mutableStateOf<Long?>(null) }
+    var quantity by remember { mutableStateOf("1") }
+    var expirationDate by remember { mutableLongStateOf(defaultExpirationDateMillis) }
+    var purchaseDate by remember { mutableLongStateOf(defaultPurchaseDateMillis) }
     var updatedBy by remember { mutableStateOf(staticCurrentUser) }
-    var category by remember { mutableStateOf("Other") } // Default category is "Other"
-    var shop by remember { mutableStateOf("General Store") } // Default shop is "General Store"
+    var category by remember { mutableStateOf("Other") }
+    var shop by remember { mutableStateOf("General Store") }
 
     // Error states
     var isNameError by remember { mutableStateOf(false) }
@@ -114,7 +127,9 @@ fun StockInputScreen(
                     DatePickerField(
                         label = "Expiration Date*",
                         selectedDateMillis = expirationDate,
-                        onDateSelected = { expirationDate = it },
+                        onDateSelected = { selectedMillis ->
+                            expirationDate = selectedMillis ?: defaultExpirationDateMillis
+                        },
                         isError = isExpirationDateError
                     )
                     Spacer(modifier = Modifier.height(6.dp))
@@ -123,7 +138,9 @@ fun StockInputScreen(
                     DatePickerField(
                         label = "Purchase Date",
                         selectedDateMillis = purchaseDate,
-                        onDateSelected = { purchaseDate = it }
+                        onDateSelected = { selectedMillis ->
+                            purchaseDate = selectedMillis ?: defaultPurchaseDateMillis
+                        }
                     )
                     Spacer(modifier = Modifier.height(6.dp))
 
@@ -170,11 +187,8 @@ fun StockInputScreen(
                                 val stockDto = StockDto(
                                     name = name,
                                     quantity = quantity.toInt(),
-                                    expirationDate = expirationDate ?: LocalDate.now().plusDays(10)
-                                        .atStartOfDay(ZoneId.systemDefault())
-                                        .toInstant()
-                                        .toEpochMilli(),
-                                    purchaseDate = purchaseDate ?: LocalDate.now().toEpochDay(),
+                                    expirationDate = expirationDate,
+                                    purchaseDate = purchaseDate,
                                     updatedBy = updatedBy,
                                     category = category,
                                     shop = shop
@@ -203,7 +217,6 @@ fun StockInputScreen(
     )
 }
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DatePickerField(
@@ -212,33 +225,27 @@ fun DatePickerField(
     onDateSelected: (Long?) -> Unit,
     isError: Boolean = false
 ) {
+    val context = LocalContext.current
+    val zoneId = ZoneId.systemDefault()
+
+    // Convert the provided date in milliseconds to LocalDate, falling back to the current date
+    val initialDate = selectedDateMillis?.let {
+        Instant.ofEpochMilli(it).atZone(zoneId).toLocalDate()
+    } ?: LocalDate.now()
+
+    // State for the text field value with the formatted date
+    var textFieldValue by remember {
+        mutableStateOf(initialDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")))
+    }
+
     // State for managing the date picker dialog visibility
     val (showDatePicker, setShowDatePicker) = remember { mutableStateOf(false) }
 
-    // Get the current date as the default
-    val currentDate = LocalDate.now()
-    val currentMillis = currentDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
-
-    // Use the provided date or fall back to the current date
-    val initialDateMillis = selectedDateMillis ?: currentMillis
-
-    // Convert the initial date from millis to a formatted string
-    val initialFormattedDate = Instant.ofEpochMilli(initialDateMillis)
-        .atZone(ZoneId.systemDefault())
-        .toLocalDate()
-        .format(DateTimeFormatter.ofPattern("dd-MM-yyyy"))
-
-    // State for text field value
-    var textFieldValue by remember { mutableStateOf(initialFormattedDate) }
-
-    // Get the current locale
-    val locale = LocalContext.current.resources.configuration.locales[0]
-
-    // Create DatePickerState inside the composable context
+    // Initialize DatePickerState
     val datePickerState = remember {
         DatePickerState(
-            initialSelectedDateMillis = initialDateMillis,
-            locale = locale
+            locale = context.resources.configuration.locales[0],
+            initialSelectedDateMillis = selectedDateMillis ?: initialDate.atStartOfDay(zoneId).toInstant().toEpochMilli()
         )
     }
 
@@ -251,13 +258,12 @@ fun DatePickerField(
                 Column {
                     DatePicker(
                         state = datePickerState,
-                        title = {
-                            Text("Select Date", Modifier.padding(16.dp))
-                        },
+                        title = { Text("Select Date", Modifier.padding(16.dp)) },
                         headline = {
                             Text(
                                 datePickerState.selectedDateMillis?.let { millis ->
-                                    Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault())
+                                    Instant.ofEpochMilli(millis)
+                                        .atZone(zoneId)
                                         .toLocalDate()
                                         .format(DateTimeFormatter.ofPattern("dd-MM-yyyy"))
                                 } ?: "No date selected",
@@ -272,11 +278,12 @@ fun DatePickerField(
             confirmButton = {
                 Button(onClick = {
                     datePickerState.selectedDateMillis?.let { millis ->
-                        onDateSelected(millis)
-                        textFieldValue = Instant.ofEpochMilli(millis)
-                            .atZone(ZoneId.systemDefault())
+                        val selectedDate = Instant.ofEpochMilli(millis)
+                            .atZone(zoneId)
                             .toLocalDate()
-                            .format(DateTimeFormatter.ofPattern("dd-MM-yyyy"))
+                        textFieldValue =
+                            selectedDate.format(DateTimeFormatter.ofPattern("dd-MM-yyyy"))
+                        onDateSelected(selectedDate.atStartOfDay(zoneId).toInstant().toEpochMilli())
                     }
                     setShowDatePicker(false)
                 }) {
@@ -302,18 +309,8 @@ fun DatePickerField(
             val formattedText = when (digitsOnly.length) {
                 in 1..2 -> digitsOnly // dd
                 in 3..4 -> "${digitsOnly.substring(0, 2)}-${digitsOnly.substring(2)}" // dd-MM
-                in 5..6 -> "${digitsOnly.substring(0, 2)}-${
-                    digitsOnly.substring(
-                        2,
-                        4
-                    )
-                }-${digitsOnly.substring(4)}" // dd-MM-yy
-                7, 8 -> "${digitsOnly.substring(0, 2)}-${
-                    digitsOnly.substring(
-                        2,
-                        4
-                    )
-                }-${digitsOnly.substring(4)}" // dd-MM-yyyy
+                in 5..6 -> "${digitsOnly.substring(0, 2)}-${digitsOnly.substring(2, 4)}-${digitsOnly.substring(4)}" // dd-MM-yy
+                7, 8 -> "${digitsOnly.substring(0, 2)}-${digitsOnly.substring(2, 4)}-${digitsOnly.substring(4)}" // dd-MM-yyyy
                 else -> digitsOnly // Fallback, should never reach here
             }
 
@@ -321,11 +318,10 @@ fun DatePickerField(
 
             if (formattedText.length == 10) { // Full date entered
                 try {
-                    val newDate =
-                        LocalDate.parse(formattedText, DateTimeFormatter.ofPattern("dd-MM-yyyy"))
-                    val millis =
-                        newDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+                    val newDate = LocalDate.parse(formattedText, DateTimeFormatter.ofPattern("dd-MM-yyyy"))
+                    val millis = newDate.atStartOfDay(zoneId).toInstant().toEpochMilli()
                     onDateSelected(millis)
+                    datePickerState.selectedDateMillis = millis // Update the date picker state
                 } catch (e: Exception) {
                     // Handle parsing exception or invalid date format
                     onDateSelected(null)
