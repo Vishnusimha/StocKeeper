@@ -71,8 +71,8 @@ fun PlanListsScreen(stockViewModel: StockViewModel, navController: NavHostContro
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(
-                        bottom = 0.dp, top = if (innerPadding.calculateTopPadding() < 16.dp) {
-                            16.dp
+                        bottom = 0.dp, top = if (innerPadding.calculateTopPadding() > 8.dp) {
+                            8.dp
                         } else {
                             innerPadding.calculateTopPadding()
                         }
@@ -82,13 +82,13 @@ fun PlanListsScreen(stockViewModel: StockViewModel, navController: NavHostContro
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(
-                        text = "Plan Maker",
+                        text = "Plans",
                         style = MaterialTheme.typography.headlineMedium
                     )
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(16.dp)
+                            .padding(top = 8.dp, bottom = 16.dp, start = 16.dp, end = 16.dp)
                     ) {
                         items(preparedPlansLists) { selectedItemList ->
                             val items =

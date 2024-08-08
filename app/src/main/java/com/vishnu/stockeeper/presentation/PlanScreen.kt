@@ -1,6 +1,7 @@
 package com.vishnu.stockeeper.presentation
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,9 +39,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 import com.vishnu.stockeeper.data.SelectedProductDto
 import com.vishnu.stockeeper.data.dateToLong
 import com.vishnu.stockeeper.data.local.PreparedPlanEntity
@@ -51,7 +54,8 @@ import java.util.Date
 import java.util.UUID
 
 @Composable
-fun PlanScreen(stockViewModel: StockViewModel) {
+fun PlanScreen(stockViewModel: StockViewModel, navController: NavHostController) {
+    val context = LocalContext.current
     val productNames by stockViewModel.productNames.collectAsState(emptyList())
     val productCategories by stockViewModel.productCategories.collectAsState(emptyList())
     val productShops by stockViewModel.productShops.collectAsState(emptyList())
@@ -255,6 +259,17 @@ fun PlanScreen(stockViewModel: StockViewModel) {
 
                 Button(onClick = {
                     val selectedProducts = selectedProductsEntity.value.values.toList()
+
+                    // Check if any items are selected
+                    if (selectedProducts.none { it.isSelected }) {
+                        Toast.makeText(
+                            context,
+                            "Select at least one item to generate a plan",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        return@Button
+                    }
+
                     val listId = UUID.randomUUID().toString() // Generate a unique ID for the list
                     val listName = dateToLong(Date())// Customize the list name
                     val preparedPlan = selectedProducts.map {
@@ -270,6 +285,7 @@ fun PlanScreen(stockViewModel: StockViewModel) {
 
                     val json = stockViewModel.getSelectedItemsAsJson()
                     Log.i("PlanScreen", json)
+                    navController.popBackStack()
                 }) {
                     Text(text = "Generate Plan")
                 }
