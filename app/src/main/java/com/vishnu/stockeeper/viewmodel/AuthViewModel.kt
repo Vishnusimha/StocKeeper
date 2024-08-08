@@ -7,6 +7,7 @@ import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.auth
 import com.vishnu.stockeeper.repository.StockManager
+import com.vishnu.stockeeper.util.Util.staticCurrentUser
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -33,6 +34,9 @@ class AuthViewModel @Inject constructor(private val stockManager: StockManager) 
     private fun checkCurrentUser() {
         currentUser = auth.currentUser
         _isUserPresent.value = currentUser != null
+        if (currentUser != null) {
+            staticCurrentUser = currentUser!!.email.toString()
+        }
     }
 
     fun getUserDetails(): String? {
