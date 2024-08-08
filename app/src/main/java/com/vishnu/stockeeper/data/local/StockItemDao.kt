@@ -35,7 +35,7 @@ interface StockItemDao {
     suspend fun getAllProductsSortedByName(): List<StockEntity>
 
     // Get all items sorted by expiration date
-    @Query("SELECT * FROM stock_items ORDER BY expirationDate DESC")
+    @Query("SELECT * FROM stock_items ORDER BY expirationDate ASC")
     suspend fun getAllProductsSortedByExpirationDate(): List<StockEntity>
 
     // Get all items sorted by quantity

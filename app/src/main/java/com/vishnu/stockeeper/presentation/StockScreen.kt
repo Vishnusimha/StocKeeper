@@ -168,7 +168,7 @@ fun StockScreen(
                                 isNameSelected = false
                                 stockViewModel.loadItemsSortedByQuantity()
                             },
-                            label = { Text("Shop") },
+                            label = { Text("Quantity") },
                             leadingIcon = {
                                 if (isQuantitySelected) {
                                     Icon(
@@ -188,7 +188,7 @@ fun StockScreen(
                                 isNameSelected = false
                                 stockViewModel.loadItemsSortedByExpirationDate()
                             },
-                            label = { Text("Category") },
+                            label = { Text("Expiry") },
                             leadingIcon = {
                                 if (isExpirySelected) {
                                     Icon(
