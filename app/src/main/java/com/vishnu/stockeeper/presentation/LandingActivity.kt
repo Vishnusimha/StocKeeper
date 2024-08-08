@@ -116,7 +116,7 @@ class LandingActivity : ComponentActivity() {
                 AuthScreen(authViewModel)
             }
             composable(Screen.PlanScreen.route) {
-                PlanScreen(stockViewModel,navController)
+                PlanScreen(stockViewModel, navController)
             }
             composable(Screen.PlanListsScreen.route) {
                 PlanListsScreen(stockViewModel, navController)

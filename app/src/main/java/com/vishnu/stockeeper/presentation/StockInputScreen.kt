@@ -245,7 +245,8 @@ fun DatePickerField(
     val datePickerState = remember {
         DatePickerState(
             locale = context.resources.configuration.locales[0],
-            initialSelectedDateMillis = selectedDateMillis ?: initialDate.atStartOfDay(zoneId).toInstant().toEpochMilli()
+            initialSelectedDateMillis = selectedDateMillis ?: initialDate.atStartOfDay(zoneId)
+                .toInstant().toEpochMilli()
         )
     }
 
@@ -309,8 +310,18 @@ fun DatePickerField(
             val formattedText = when (digitsOnly.length) {
                 in 1..2 -> digitsOnly // dd
                 in 3..4 -> "${digitsOnly.substring(0, 2)}-${digitsOnly.substring(2)}" // dd-MM
-                in 5..6 -> "${digitsOnly.substring(0, 2)}-${digitsOnly.substring(2, 4)}-${digitsOnly.substring(4)}" // dd-MM-yy
-                7, 8 -> "${digitsOnly.substring(0, 2)}-${digitsOnly.substring(2, 4)}-${digitsOnly.substring(4)}" // dd-MM-yyyy
+                in 5..6 -> "${digitsOnly.substring(0, 2)}-${
+                    digitsOnly.substring(
+                        2,
+                        4
+                    )
+                }-${digitsOnly.substring(4)}" // dd-MM-yy
+                7, 8 -> "${digitsOnly.substring(0, 2)}-${
+                    digitsOnly.substring(
+                        2,
+                        4
+                    )
+                }-${digitsOnly.substring(4)}" // dd-MM-yyyy
                 else -> digitsOnly // Fallback, should never reach here
             }
 
@@ -318,7 +329,8 @@ fun DatePickerField(
 
             if (formattedText.length == 10) { // Full date entered
                 try {
-                    val newDate = LocalDate.parse(formattedText, DateTimeFormatter.ofPattern("dd-MM-yyyy"))
+                    val newDate =
+                        LocalDate.parse(formattedText, DateTimeFormatter.ofPattern("dd-MM-yyyy"))
                     val millis = newDate.atStartOfDay(zoneId).toInstant().toEpochMilli()
                     onDateSelected(millis)
                     datePickerState.selectedDateMillis = millis // Update the date picker state
